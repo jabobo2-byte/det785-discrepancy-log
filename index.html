@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AFROTC Det 785 | Discrepancy Log</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
+
+:root{
+  --paper:#EEF1F7;
+  --paper-raised:#FFFFFF;
+  --ink:#1B2130;
+  --navy:#2B3B5C;
+  --navy-dark:#16345E;
+  --navy-light:#5A6C90;
+  --line:#D8DEEA;
+  --line-strong:#B9C2D6;
+  --amber:#95661A;
+  --amber-bg:#F1E4C9;
+  --red:#8B2E22;
+  --red-bg:#F0DCD6;
+  --green:#3F5F3F;
+  --green-bg:#DCE6DA;
+  --sky-top:#2E3D8C;
+  --sky-mid:#3E5AC4;
+  --sky-bottom:#7C9BEF;
+  --orange:#F5941E;
+  --orange-dark:#D67900;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'IBM Plex Sans',sans-serif;
+  min-height:100vh;
+}
+
+.hero{
+  background:linear-gradient(160deg, var(--sky-top) 0%, var(--sky-mid) 45%, var(--sky-bottom) 100%);
+  padding:20px 32px 22px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:16px;
+  border-bottom:3px solid var(--orange);
+  position:relative;
+  overflow:hidden;
+}
+.hero::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(ellipse 60% 80% at 85% -10%, rgba(255,255,255,0.18), transparent 60%),
+    radial-gradient(ellipse 40% 60% at 10% 120%, rgba(255,255,255,0.12), transparent 60%);
+  pointer-events:none;
+}
+.hero-brand{position:relative;z-index:1;}
+.hero-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  background:var(--orange);
+  color:#1B2130;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  padding:4px 12px;
+  border-radius:14px;
+  margin-bottom:8px;
+}
+.hero-brand .school{
+  font-family:'IBM Plex Sans',sans-serif;
+  font-size:13px;
+  color:#D9E1FA;
+  letter-spacing:.02em;
+  margin-bottom:2px;
+}
+.hero-brand h1{
+  font-family:'Oswald',sans-serif;
+  font-weight:700;
+  font-size:32px;
+  letter-spacing:.02em;
+  color:#fff;
+  text-transform:uppercase;
+  margin:0;
+  text-shadow:0 2px 10px rgba(0,0,0,0.15);
+}
+.hero-brand .det{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:13px;
+  color:#C9D6F7;
+  margin-top:2px;
+}
+.hero-stats{
+  position:relative;
+  z-index:1;
+  display:flex;
+  gap:26px;
+}
+.hero-stat{font-family:'IBM Plex Mono',monospace;text-align:center;}
+.hero-stat .num{font-size:26px;font-weight:700;line-height:1;color:#fff;}
+.hero-stat .lbl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#C9D6F7;margin-top:4px;}
+.hero-stat.open .num{color:#FFD9C9;}
+
+.app{display:flex;min-height:calc(100vh - 108px);}
+
+/* ---------- Sidebar ---------- */
+.sidebar{
+  width:290px;
+  flex-shrink:0;
+  background:var(--navy-dark);
+  color:#E8E9EE;
+  display:flex;
+  flex-direction:column;
+  border-right:3px solid var(--ink);
+}
+.sidebar-head{
+  padding:22px 20px 16px;
+  border-bottom:1px solid rgba(255,255,255,0.15);
+}
+.sidebar-head .eyebrow{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  letter-spacing:.14em;
+  color:#93A2C4;
+  text-transform:uppercase;
+}
+.sidebar-head h1{
+  font-family:'Oswald',sans-serif;
+  font-weight:600;
+  font-size:22px;
+  letter-spacing:.02em;
+  margin:4px 0 2px;
+  text-transform:uppercase;
+}
+.sidebar-head .sub{
+  font-size:12px;
+  color:#93A2C4;
+  font-family:'IBM Plex Mono',monospace;
+}
+.view-toggle{
+  display:flex;
+  margin:14px 20px 0;
+  border:1px solid rgba(255,255,255,0.25);
+  border-radius:3px;
+  overflow:hidden;
+}
+.view-toggle button{
+  flex:1;
+  background:transparent;
+  border:none;
+  color:#B7C0D6;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  letter-spacing:.06em;
+  padding:8px 4px;
+  cursor:pointer;
+  text-transform:uppercase;
+}
+.view-toggle button.active{background:var(--navy-light);color:#fff;}
+
+.roster{
+  flex:1;
+  overflow-y:auto;
+  padding:14px 0 20px;
+}
+.flight-group{margin-bottom:16px;padding:0 20px;}
+.flight-label{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  font-family:'Oswald',sans-serif;
+  font-weight:600;
+  font-size:16px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:#fff;
+  padding:0 0 8px;
+  border-bottom:2px solid var(--orange);
+  margin-bottom:10px;
+}
+.flight-open-ct{
+  font-size:10px;
+  letter-spacing:.06em;
+  background:var(--red);
+  color:#fff;
+  padding:2px 7px;
+  border-radius:10px;
+}
+.flight-select{
+  width:100%;
+  font-family:'IBM Plex Sans',sans-serif;
+  font-size:14px;
+  padding:10px 12px;
+  border-radius:4px;
+  border:1px solid rgba(255,255,255,0.25);
+  background:rgba(255,255,255,0.06);
+  color:#E8E9EE;
+  cursor:pointer;
+}
+.flight-select:hover{background:rgba(255,255,255,0.1);}
+.flight-select.active-flight{
+  border-color:var(--orange);
+  background:rgba(245,148,30,0.14);
+  color:#fff;
+}
+.flight-select option{
+  background:var(--navy-dark);
+  color:#E8E9EE;
+}
+
+.sidebar-foot{
+  padding:12px 20px 16px;
+  border-top:1px solid rgba(255,255,255,0.15);
+}
+.add-cadet-btn{
+  width:100%;
+  background:transparent;
+  border:1px dashed rgba(255,255,255,0.3);
+  color:#9BA6C2;
+  padding:8px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  border-radius:3px;
+  cursor:pointer;
+}
+.add-cadet-btn:hover{border-color:var(--orange);color:var(--orange);}
+
+/* ---------- Main ---------- */
+.main{flex:1;display:flex;flex-direction:column;min-width:0;}
+
+.topbar{
+  padding:20px 32px;
+  border-bottom:2px solid var(--ink);
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:16px;
+  background:var(--paper-raised);
+}
+.topbar-view-label{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:#6B6555;
+}
+
+.search-box{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+.search-box input, .search-box select{
+  font-family:'IBM Plex Sans',sans-serif;
+  font-size:13px;
+  padding:8px 10px;
+  border:1px solid var(--line-strong);
+  border-radius:3px;
+  background:#fff;
+  color:var(--ink);
+}
+
+.content{flex:1;overflow-y:auto;padding:28px 32px 60px;}
+
+/* Cadet header */
+.cadet-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:22px;
+  flex-wrap:wrap;
+  gap:14px;
+}
+.cadet-header h2{
+  font-family:'Oswald',sans-serif;
+  font-size:30px;
+  text-transform:uppercase;
+  margin:0;
+  letter-spacing:.01em;
+}
+.cadet-header .meta{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  color:#6B6555;
+  margin-top:4px;
+}
+.btn{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  padding:10px 18px;
+  border-radius:3px;
+  border:none;
+  cursor:pointer;
+}
+.btn-primary{background:var(--navy);color:#fff;}
+.btn-primary:hover{background:var(--navy-dark);}
+.btn-ghost{background:transparent;border:1px solid var(--line-strong);color:var(--ink);}
+.btn-ghost:hover{border-color:var(--ink);}
+
+/* Ledger entries */
+.entry{
+  background:var(--paper-raised);
+  border:1px solid var(--line);
+  border-left:4px solid var(--line-strong);
+  border-radius:2px;
+  padding:16px 18px;
+  margin-bottom:12px;
+  display:flex;
+  justify-content:space-between;
+  gap:16px;
+}
+.entry.sev-minor{border-left-color:var(--amber);}
+.entry.sev-major{border-left-color:var(--red);}
+.entry.status-resolved{opacity:.6;}
+.entry-main{flex:1;min-width:0;}
+.entry-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
+.tag{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  padding:3px 8px;
+  border-radius:2px;
+}
+.tag.sev-minor{background:var(--amber-bg);color:var(--amber);}
+.tag.sev-major{background:var(--red-bg);color:var(--red);}
+.tag.status-open{background:var(--red-bg);color:var(--red);}
+.tag.status-resolved{background:var(--green-bg);color:var(--green);}
+.tag.action-verbal{background:#E4E1D6;color:#544F42;}
+.tag.action-cam{background:var(--amber-bg);color:var(--amber);}
+.tag.action-loc{background:var(--red-bg);color:var(--red);}
+.tag.para{background:#E4E1D6;color:#544F42;}
+.entry-cadet-link{font-weight:600;font-size:13px;}
+.entry-desc{font-size:14px;line-height:1.5;margin:4px 0 8px;}
+.entry-foot{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  color:#847C68;
+}
+.entry-actions{display:flex;flex-direction:column;gap:6px;align-items:flex-end;}
+.icon-btn{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  background:none;
+  border:1px solid var(--line-strong);
+  border-radius:3px;
+  padding:6px 10px;
+  cursor:pointer;
+  color:var(--ink);
+  white-space:nowrap;
+}
+.icon-btn:hover{background:#fff;}
+.icon-btn.danger{color:var(--red);border-color:var(--red-bg);}
+.icon-btn.danger:hover{background:var(--red-bg);}
+
+.empty-state{
+  text-align:center;
+  padding:60px 20px;
+  color:#8A8471;
+}
+.empty-state .big{font-family:'Oswald',sans-serif;font-size:20px;text-transform:uppercase;color:#544F42;margin-bottom:6px;}
+
+/* All-discrepancies table view */
+.all-list .entry{flex-direction:column;}
+.all-list .entry-top{justify-content:space-between;width:100%;}
+
+/* Modal */
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(20,22,30,0.55);
+  display:flex;align-items:center;justify-content:center;z-index:50;
+  padding:20px;
+}
+.modal{
+  background:var(--paper-raised);
+  width:100%;max-width:480px;
+  border-radius:4px;
+  border:1px solid var(--line-strong);
+  padding:26px 26px 22px;
+  max-height:90vh;
+  overflow-y:auto;
+}
+.modal h3{
+  font-family:'Oswald',sans-serif;
+  text-transform:uppercase;
+  font-size:19px;
+  margin:0 0 16px;
+}
+.field{margin-bottom:14px;}
+.field label{
+  display:block;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:#6B6555;
+  margin-bottom:5px;
+}
+.field input, .field select, .field textarea{
+  width:100%;
+  font-family:'IBM Plex Sans',sans-serif;
+  font-size:14px;
+  padding:9px 10px;
+  border:1px solid var(--line-strong);
+  border-radius:3px;
+  background:#fff;
+  color:var(--ink);
+}
+.field textarea{resize:vertical;min-height:70px;}
+.sev-radio{display:flex;gap:8px;}
+.sev-radio label{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid var(--line-strong);
+  border-radius:3px;
+  padding:8px;
+  font-size:13px;
+  cursor:pointer;
+  text-transform:none;
+  font-family:'IBM Plex Sans',sans-serif;
+  letter-spacing:0;
+}
+.sev-radio input{width:auto;margin-right:6px;}
+.action-radio label{padding:8px 4px;font-size:12px;}
+.cam-reminder{
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  margin-top:10px;
+  padding:10px 12px;
+  background:var(--amber-bg);
+  border:1px solid var(--amber);
+  border-radius:4px;
+  font-size:13px;
+  line-height:1.4;
+  color:var(--amber);
+}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;}
+
+.loading{padding:40px;text-align:center;color:#8A8471;font-family:'IBM Plex Mono',monospace;font-size:13px;}
+
+@media (max-width: 760px){
+  .app{flex-direction:column;}
+  .sidebar{width:100%;max-height:280px;}
+  .content{padding:20px 16px 60px;}
+  .topbar{padding:16px;}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const {useState, useEffect, useMemo, useCallback} = React;
+
+const AFI_CATEGORIES = [
+  "Hair & Grooming",
+  "Shaving/Facial Hair",
+  "Fingernails/Cosmetics",
+  "Jewelry",
+  "Tattoos/Brands/Piercings",
+  "Uniform Fit & Wear",
+  "Uniform Assembly/Combination",
+  "Insignia, Badges & Devices",
+  "Headgear",
+  "Footwear",
+  "Bearing/Grooming Standard",
+  "Other / General"
+];
+
+const SEED_ROSTER = [
+  {id:"c01", last:"Armstrong", first:"Carrington", flight:"Bravo"},
+  {id:"c02", last:"Bauer", first:"Matthew", flight:"Alpha"},
+  {id:"c03", last:"Bembry", first:"Darrius", flight:"Delta"},
+  {id:"c04", last:"Brooks", first:"Darius", flight:"Charlie"},
+  {id:"c05", last:"Bryant", first:"Elijah", flight:"Charlie"},
+  {id:"c06", last:"Burks", first:"Jaiden", flight:"Alpha"},
+  {id:"c07", last:"Deleon", first:"Melissa", flight:"Bravo"},
+  {id:"c08", last:"Diatta", first:"Mariam", flight:"Alpha"},
+  {id:"c09", last:"Dodd", first:"Anthony", flight:"Delta"},
+  {id:"c10", last:"East", first:"Devon", flight:"Charlie"},
+  {id:"c11", last:"Green", first:"Keniah", flight:"Alpha"},
+  {id:"c12", last:"Hoy", first:"Jaxson", flight:"Bravo"},
+  {id:"c13", last:"Hubbert", first:"Amya", flight:"Bravo"},
+  {id:"c14", last:"Irvin", first:"Jordan", flight:"Delta"},
+  {id:"c15", last:"Johnson", first:"Dylan", flight:"Alpha"},
+  {id:"c16", last:"Koutouan", first:"Zion", flight:"Delta"},
+  {id:"c17", last:"Lewis", first:"Marcel", flight:"Charlie"},
+  {id:"c18", last:"Luong", first:"Dylan", flight:"Charlie"},
+  {id:"c19", last:"McClure", first:"Deziya", flight:"Delta"},
+  {id:"c20", last:"Mennis", first:"Antonio", flight:"Alpha"},
+  {id:"c21", last:"Outlaw", first:"Cheyenne", flight:"Bravo"},
+  {id:"c22", last:"Parker", first:"Karson", flight:"Charlie"},
+  {id:"c23", last:"Ritchie", first:"William", flight:"Delta"},
+  {id:"c24", last:"Shaw", first:"Janiyah", flight:"Bravo"},
+  {id:"c25", last:"Smith", first:"Kennedi", flight:"Bravo"},
+  {id:"c26", last:"Spring", first:"Kylah", flight:"Delta"},
+  {id:"c27", last:"Stanley", first:"Michael", flight:"Alpha"},
+  {id:"c28", last:"Taylor", first:"DeVynn", flight:"Charlie"},
+  {id:"c29", last:"Tyler", first:"Tylen", flight:"Bravo"},
+  {id:"c30", last:"Utlang", first:"John", flight:"Alpha"},
+  {id:"c31", last:"Wallace", first:"Sabria", flight:"Delta"},
+  {id:"c32", last:"Walls", first:"J'onaiyah", flight:"Alpha"},
+  {id:"c33", last:"Ward", first:"Ariyanna", flight:"Bravo"},
+  {id:"c34", last:"Wright", first:"Eric", flight:"Charlie"},
+];
+
+const FLIGHT_ORDER = ["Alpha","Bravo","Charlie","Delta"];
+
+function uid(prefix){
+  return prefix + "_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,7);
+}
+
+function fmtDate(iso){
+  if(!iso) return "";
+  const d = new Date(iso + "T00:00:00");
+  return d.toLocaleDateString('en-US',{month:'short',day:'2-digit',year:'numeric'});
+}
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAKEzzM-WFCOSkvikRRSpXMss-j8WAZ3_c",
+  authDomain: "det-785-discrepancy-tracker.firebaseapp.com",
+  databaseURL: "https://det-785-discrepancy-tracker-default-rtdb.firebaseio.com",
+  projectId: "det-785-discrepancy-tracker",
+  storageBucket: "det-785-discrepancy-tracker.firebasestorage.app",
+  messagingSenderId: "218940278378",
+  appId: "1:218940278378:web:daf5fd78b545d93d11ac13"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+async function loadShared(key, fallback){
+  try{
+    const snap = await db.ref(key).once('value');
+    const val = snap.val();
+    return (val === null || val === undefined) ? fallback : val;
+  }catch(e){
+    return fallback;
+  }
+}
+async function saveShared(key, value){
+  try{
+    await db.ref(key).set(value);
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+function App(){
+  const [loading, setLoading] = useState(true);
+  const [saveError, setSaveError] = useState("");
+  const [roster, setRoster] = useState([]);
+  const [discrepancies, setDiscrepancies] = useState([]);
+  const [selectedCadet, setSelectedCadet] = useState(null);
+  const [view, setView] = useState("cadet"); // 'cadet' | 'all'
+  const [showLogModal, setShowLogModal] = useState(false);
+  const [showAddCadet, setShowAddCadet] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      const [r, d] = await Promise.all([
+        loadShared("roster", null),
+        loadShared("discrepancies", [])
+      ]);
+      let finalRoster = r;
+      if(!finalRoster){
+        finalRoster = SEED_ROSTER;
+        await saveShared("roster", finalRoster);
+      }
+      setRoster(finalRoster);
+      setDiscrepancies(d || []);
+      if(finalRoster.length) setSelectedCadet(finalRoster[0].id);
+      setLoading(false);
+    })();
+  }, []);
+
+  const persistDiscrepancies = useCallback(async (next) => {
+    setDiscrepancies(next);
+    const ok = await saveShared("discrepancies", next);
+    if(!ok) setSaveError("Couldn't save — check your connection and try again.");
+    else setSaveError("");
+  }, []);
+
+  const persistRoster = useCallback(async (next) => {
+    setRoster(next);
+    const ok = await saveShared("roster", next);
+    if(!ok) setSaveError("Couldn't save — check your connection and try again.");
+    else setSaveError("");
+  }, []);
+
+  const openCountByCadet = useMemo(() => {
+    const m = {};
+    discrepancies.forEach(d => {
+      if(d.status === "open") m[d.cadetId] = (m[d.cadetId]||0) + 1;
+    });
+    return m;
+  }, [discrepancies]);
+
+  const flights = useMemo(() => {
+    const g = {};
+    FLIGHT_ORDER.forEach(f => g[f] = []);
+    roster.forEach(c => {
+      if(!g[c.flight]) g[c.flight] = [];
+      g[c.flight].push(c);
+    });
+    Object.keys(g).forEach(f => g[f].sort((a,b) => a.last.localeCompare(b.last)));
+    return g;
+  }, [roster]);
+
+  const totalOpen = discrepancies.filter(d => d.status === "open").length;
+  const totalResolved = discrepancies.filter(d => d.status === "resolved").length;
+
+  const cadetById = useCallback((id) => roster.find(c => c.id === id), [roster]);
+
+  function addDiscrepancy(entry){
+    const next = [...discrepancies, {
+      id: uid("dq"),
+      cadetId: entry.cadetId,
+      category: entry.category,
+      description: entry.description,
+      severity: entry.severity,
+      action: entry.action,
+      dateNoted: entry.dateNoted,
+      notedBy: entry.notedBy,
+      status: "open",
+      dateResolved: null
+    }];
+    persistDiscrepancies(next);
+  }
+
+  function toggleStatus(id){
+    const next = discrepancies.map(d => {
+      if(d.id !== id) return d;
+      const nowOpen = d.status === "resolved";
+      return {...d, status: nowOpen ? "open" : "resolved", dateResolved: nowOpen ? null : new Date().toISOString().slice(0,10)};
+    });
+    persistDiscrepancies(next);
+  }
+
+  function deleteEntry(id){
+    persistDiscrepancies(discrepancies.filter(d => d.id !== id));
+  }
+
+  function addCadet(c){
+    const next = [...roster, {id: uid("c"), last:c.last, first:c.first, flight:c.flight}];
+    persistRoster(next);
+  }
+
+  const cadetEntries = useMemo(() => {
+    if(!selectedCadet) return [];
+    return discrepancies
+      .filter(d => d.cadetId === selectedCadet)
+      .sort((a,b) => (b.dateNoted||"").localeCompare(a.dateNoted||""));
+  }, [discrepancies, selectedCadet]);
+
+  const allEntries = useMemo(() => {
+    let list = discrepancies.slice().sort((a,b) => (b.dateNoted||"").localeCompare(a.dateNoted||""));
+    if(statusFilter !== "all") list = list.filter(d => d.status === statusFilter);
+    if(searchTerm.trim()){
+      const term = searchTerm.trim().toLowerCase();
+      list = list.filter(d => {
+        const c = cadetById(d.cadetId);
+        const name = c ? (c.first + " " + c.last).toLowerCase() : "";
+        return name.includes(term) || d.description.toLowerCase().includes(term) || d.category.toLowerCase().includes(term);
+      });
+    }
+    return list;
+  }, [discrepancies, statusFilter, searchTerm, cadetById]);
+
+  if(loading){
+    return <div className="loading">Loading roster and discrepancy log…</div>;
+  }
+
+  const selected = selectedCadet ? cadetById(selectedCadet) : null;
+
+  return (
+    <React.Fragment>
+    <div className="hero">
+      <div className="hero-brand">
+        <div className="hero-badge">Discrepancy Log</div>
+        <div className="school">University of Memphis</div>
+        <h1>AFROTC Det 785</h1>
+        <div className="det">AFI 36-2903 · Cadet Portal</div>
+      </div>
+      <div className="hero-stats">
+        <div className="hero-stat open">
+          <div className="num">{totalOpen}</div>
+          <div className="lbl">Open</div>
+        </div>
+        <div className="hero-stat">
+          <div className="num">{totalResolved}</div>
+          <div className="lbl">Resolved</div>
+        </div>
+        <div className="hero-stat">
+          <div className="num">{roster.length}</div>
+          <div className="lbl">Cadets</div>
+        </div>
+      </div>
+    </div>
+    <div className="app">
+      <div className="sidebar">
+        <div className="sidebar-head">
+          <div className="view-toggle">
+            <button className={view==="cadet"?"active":""} onClick={()=>setView("cadet")}>By Cadet</button>
+            <button className={view==="all"?"active":""} onClick={()=>setView("all")}>All Entries</button>
+          </div>
+        </div>
+        <div className="roster">
+          {FLIGHT_ORDER.filter(f => flights[f] && flights[f].length).map(f => {
+            const flightOpenCt = flights[f].reduce((sum,c) => sum + (openCountByCadet[c.id]||0), 0);
+            const isActiveFlight = selected && selected.flight === f;
+            return (
+              <div className="flight-group" key={f}>
+                <div className="flight-label">
+                  {f} Flight
+                  {flightOpenCt > 0 && <span className="flight-open-ct">{flightOpenCt} open</span>}
+                </div>
+                <select
+                  className={"flight-select" + (isActiveFlight ? " active-flight" : "")}
+                  value={isActiveFlight ? selectedCadet : ""}
+                  onChange={(e) => { if(e.target.value){ setSelectedCadet(e.target.value); setView("cadet"); } }}
+                >
+                  <option value="" disabled>Select a cadet…</option>
+                  {flights[f].map(c => {
+                    const openCt = openCountByCadet[c.id] || 0;
+                    return (
+                      <option key={c.id} value={c.id}>
+                        {c.last}, {c.first}{openCt > 0 ? " — " + openCt + " open" : ""}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            );
+          })}
+        </div>
+        <div className="sidebar-foot">
+          <button className="add-cadet-btn" onClick={()=>setShowAddCadet(true)}>+ Add Cadet</button>
+        </div>
+      </div>
+
+      <div className="main">
+        <div className="topbar">
+          <div className="topbar-view-label">
+            {view === "cadet" ? "Cadet Record" : "All Discrepancies"}
+          </div>
+          {view === "all" && (
+            <div className="search-box">
+              <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}>
+                <option value="all">All statuses</option>
+                <option value="open">Open only</option>
+                <option value="resolved">Resolved only</option>
+              </select>
+              <input
+                type="text"
+                placeholder="Search name, category, notes…"
+                value={searchTerm}
+                onChange={e=>setSearchTerm(e.target.value)}
+              />
+            </div>
+          )}
+          {saveError && <div style={{color:"var(--red)", fontFamily:"'IBM Plex Mono',monospace", fontSize:12}}>{saveError}</div>}
+        </div>
+
+        <div className="content">
+          {view === "cadet" && selected && (
+            <React.Fragment>
+              <div className="cadet-header">
+                <div>
+                  <h2>{selected.last}, {selected.first}</h2>
+                  <div className="meta">{selected.flight} Flight · {cadetEntries.filter(e=>e.status==="open").length} open discrepanc{cadetEntries.filter(e=>e.status==="open").length===1?"y":"ies"}</div>
+                </div>
+                <button className="btn btn-primary" onClick={()=>setShowLogModal(true)}>+ Log Discrepancy</button>
+              </div>
+
+              {cadetEntries.length === 0 && (
+                <div className="empty-state">
+                  <div className="big">No discrepancies on file</div>
+                  <div>This cadet has a clean record.</div>
+                </div>
+              )}
+
+              {cadetEntries.map(e => (
+                <EntryRow key={e.id} entry={e} onToggle={toggleStatus} onDelete={deleteEntry} />
+              ))}
+            </React.Fragment>
+          )}
+
+          {view === "cadet" && !selected && (
+            <div className="empty-state">
+              <div className="big">Select a cadet</div>
+              <div>Choose a name from the roster to view their record.</div>
+            </div>
+          )}
+
+          {view === "all" && (
+            <div className="all-list">
+              {allEntries.length === 0 && (
+                <div className="empty-state">
+                  <div className="big">No matching entries</div>
+                  <div>Try adjusting your filters.</div>
+                </div>
+              )}
+              {allEntries.map(e => (
+                <EntryRow key={e.id} entry={e} onToggle={toggleStatus} onDelete={deleteEntry} cadet={cadetById(e.cadetId)} showCadet />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {showLogModal && selected && (
+        <LogModal
+          cadet={selected}
+          existingEntries={cadetEntries}
+          onClose={()=>setShowLogModal(false)}
+          onSubmit={(entry)=>{ addDiscrepancy({...entry, cadetId: selected.id}); setShowLogModal(false); }}
+        />
+      )}
+
+      {showAddCadet && (
+        <AddCadetModal onClose={()=>setShowAddCadet(false)} onSubmit={(c)=>{ addCadet(c); setShowAddCadet(false); }} />
+      )}
+    </div>
+    </React.Fragment>
+  );
+}
+
+function EntryRow({entry, onToggle, onDelete, cadet, showCadet}){
+  const ACTION_LABELS = {verbal:"Verbal Warning", cam:"CAM", loc:"LOC"};
+  return (
+    <div className={"entry sev-" + entry.severity + " status-" + entry.status}>
+      <div className="entry-main">
+        <div className="entry-top">
+          {showCadet && cadet && <span className="entry-cadet-link">{cadet.last}, {cadet.first}</span>}
+          <span className="tag para">{entry.category}</span>
+          <span className={"tag sev-" + entry.severity}>{entry.severity === "major" ? "Major" : "Minor"}</span>
+          {entry.action && <span className={"tag action-" + entry.action}>{ACTION_LABELS[entry.action] || entry.action}</span>}
+          <span className={"tag status-" + entry.status}>{entry.status === "open" ? "Open" : "Resolved"}</span>
+        </div>
+        <div className="entry-desc">{entry.description}</div>
+        <div className="entry-foot">
+          Noted {fmtDate(entry.dateNoted)}{entry.notedBy ? " by " + entry.notedBy : ""}
+          {entry.status === "resolved" && entry.dateResolved && " · Resolved " + fmtDate(entry.dateResolved)}
+        </div>
+      </div>
+      <div className="entry-actions">
+        <button className="icon-btn" onClick={()=>onToggle(entry.id)}>
+          {entry.status === "open" ? "Mark Resolved" : "Reopen"}
+        </button>
+        <button className="icon-btn danger" onClick={()=>{ if(confirm("Delete this entry?")) onDelete(entry.id); }}>Delete</button>
+      </div>
+    </div>
+  );
+}
+
+function LogModal({cadet, existingEntries, onClose, onSubmit}){
+  const [category, setCategory] = useState(AFI_CATEGORIES[0]);
+  const [description, setDescription] = useState("");
+  const [severity, setSeverity] = useState("minor");
+  const [action, setAction] = useState("verbal");
+  const [dateNoted, setDateNoted] = useState(new Date().toISOString().slice(0,10));
+  const [notedBy, setNotedBy] = useState("");
+
+  const priorVerbalCount = (existingEntries || []).filter(e => e.action === "verbal").length;
+  const priorCamCount = (existingEntries || []).filter(e => e.action === "cam").length;
+  const showCamReminder = action === "verbal" && priorVerbalCount >= 2;
+  const showLocReminder = action === "cam" && priorCamCount >= 2;
+
+  function submit(e){
+    e.preventDefault();
+    if(!description.trim() || !notedBy.trim()) return;
+    onSubmit({category, description: description.trim(), severity, action, dateNoted, notedBy: notedBy.trim()});
+  }
+
+  return (
+    <div className="modal-backdrop" onClick={(e)=>{ if(e.target===e.currentTarget) onClose(); }}>
+      <div className="modal">
+        <h3>Log Discrepancy — {cadet.last}, {cadet.first}</h3>
+        <form onSubmit={submit}>
+          <div className="field">
+            <label>AFI 36-2903 Category</label>
+            <select value={category} onChange={e=>setCategory(e.target.value)}>
+              {AFI_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div className="field">
+            <label>Description</label>
+            <textarea placeholder="What was observed…" value={description} onChange={e=>setDescription(e.target.value)} required />
+          </div>
+          <div className="field">
+            <label>Severity</label>
+            <div className="sev-radio">
+              <label><input type="radio" name="sev" checked={severity==="minor"} onChange={()=>setSeverity("minor")} /> Minor</label>
+              <label><input type="radio" name="sev" checked={severity==="major"} onChange={()=>setSeverity("major")} /> Major</label>
+            </div>
+          </div>
+          <div className="field">
+            <label>Action taken</label>
+            <div className="sev-radio action-radio">
+              <label><input type="radio" name="action" checked={action==="verbal"} onChange={()=>setAction("verbal")} /> Verbal Warning</label>
+              <label><input type="radio" name="action" checked={action==="cam"} onChange={()=>setAction("cam")} /> CAM</label>
+              <label><input type="radio" name="action" checked={action==="loc"} onChange={()=>setAction("loc")} /> LOC</label>
+            </div>
+            {showCamReminder && (
+              <div className="cam-reminder">
+                ⚠ This cadet already has {priorVerbalCount} verbal warning{priorVerbalCount===1?"":"s"} on file. Policy calls for a CAM after 2 — consider selecting CAM instead.
+              </div>
+            )}
+            {showLocReminder && (
+              <div className="cam-reminder">
+                ⚠ This cadet already has {priorCamCount} CAM{priorCamCount===1?"":"s"} on file. Policy calls for an LOC after 2 — consider selecting LOC instead.
+              </div>
+            )}
+          </div>
+          <div className="field">
+            <label>Date noted</label>
+            <input type="date" value={dateNoted} onChange={e=>setDateNoted(e.target.value)} />
+          </div>
+          <div className="field">
+            <label>Noted by</label>
+            <input type="text" placeholder="e.g. C/Lt Col Bobo" value={notedBy} onChange={e=>setNotedBy(e.target.value)} required />
+          </div>
+          <div className="modal-actions">
+            <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
+            <button type="submit" className="btn btn-primary">Save Entry</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function AddCadetModal({onClose, onSubmit}){
+  const [last, setLast] = useState("");
+  const [first, setFirst] = useState("");
+  const [flight, setFlight] = useState(FLIGHT_ORDER[0]);
+
+  function submit(e){
+    e.preventDefault();
+    if(!last.trim() || !first.trim()) return;
+    onSubmit({last: last.trim(), first: first.trim(), flight});
+  }
+
+  return (
+    <div className="modal-backdrop" onClick={(e)=>{ if(e.target===e.currentTarget) onClose(); }}>
+      <div className="modal">
+        <h3>Add Cadet</h3>
+        <form onSubmit={submit}>
+          <div className="field">
+            <label>Last name</label>
+            <input type="text" value={last} onChange={e=>setLast(e.target.value)} required />
+          </div>
+          <div className="field">
+            <label>First name</label>
+            <input type="text" value={first} onChange={e=>setFirst(e.target.value)} required />
+          </div>
+          <div className="field">
+            <label>Flight</label>
+            <select value={flight} onChange={e=>setFlight(e.target.value)}>
+              {FLIGHT_ORDER.map(f => <option key={f} value={f}>{f}</option>)}
+            </select>
+          </div>
+          <div className="modal-actions">
+            <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
+            <button type="submit" className="btn btn-primary">Add Cadet</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+</body>
+</html>
