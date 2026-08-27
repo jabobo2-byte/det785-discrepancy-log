@@ -881,8 +881,13 @@ function LogModal({cadet, existingEntries, onClose, onSubmit}){
 
   const priorVerbalCount = (existingEntries || []).filter(e => e.action === "verbal").length;
   const priorCamCount = (existingEntries || []).filter(e => e.action === "cam").length;
-  const showCamReminder = action === "verbal" && priorVerbalCount >= 2;
-  const showLocReminder = action === "cam" && priorCamCount >= 2;
+  const SEVERITY_RANK = {verbal:0, cam:1, loc:2};
+  // If they already have 2+ CAMs, the recommendation is LOC. If they have 2+ verbals (but fewer than 2 CAMs), recommendation is CAM.
+  const recommended = priorCamCount >= 2 ? "loc" : (priorVerbalCount >= 2 ? "cam" : null);
+  const showReminder = recommended && SEVERITY_RANK[action] < SEVERITY_RANK[recommended];
+  const reminderText = recommended === "loc"
+    ? `This cadet already has ${priorCamCount} CAM${priorCamCount===1?"":"s"} on file. Policy calls for an LOC after 2 — consider selecting LOC instead.`
+    : `This cadet already has ${priorVerbalCount} verbal warning${priorVerbalCount===1?"":"s"} on file. Policy calls for a CAM after 2 — consider selecting CAM instead.`;
 
   function submit(e){
     e.preventDefault();
@@ -919,14 +924,9 @@ function LogModal({cadet, existingEntries, onClose, onSubmit}){
               <label><input type="radio" name="action" checked={action==="cam"} onChange={()=>setAction("cam")} /> CAM</label>
               <label><input type="radio" name="action" checked={action==="loc"} onChange={()=>setAction("loc")} /> LOC</label>
             </div>
-            {showCamReminder && (
+            {showReminder && (
               <div className="cam-reminder">
-                ⚠ This cadet already has {priorVerbalCount} verbal warning{priorVerbalCount===1?"":"s"} on file. Policy calls for a CAM after 2 — consider selecting CAM instead.
-              </div>
-            )}
-            {showLocReminder && (
-              <div className="cam-reminder">
-                ⚠ This cadet already has {priorCamCount} CAM{priorCamCount===1?"":"s"} on file. Policy calls for an LOC after 2 — consider selecting LOC instead.
+                ⚠ {reminderText}
               </div>
             )}
           </div>
