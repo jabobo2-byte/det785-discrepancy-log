@@ -365,6 +365,18 @@ body{
   color:#6B6555;
   margin:0 0 18px;
 }
+.btn-danger{
+  background:#fff;
+  border:1.5px solid var(--red);
+  color:var(--red);
+}
+.btn-danger:hover{background:var(--red-bg);}
+.cadet-danger-zone{
+  margin-top:36px;
+  padding-top:18px;
+  border-top:1px solid var(--line);
+  text-align:right;
+}
 .btn{
   font-family:'IBM Plex Mono',monospace;
   font-size:12px;
@@ -442,25 +454,6 @@ body{
   color:#8A8471;
 }
 .empty-state .big{font-family:'Oswald',sans-serif;font-size:20px;text-transform:uppercase;color:#544F42;margin-bottom:6px;}
-
-/* Delete-cadet: intentionally tucked away, low-contrast, requires confirm */
-.cadet-danger-zone{
-  margin-top:56px;
-  padding-top:14px;
-  border-top:1px solid var(--line);
-  text-align:right;
-}
-.cadet-delete-link{
-  background:none;
-  border:none;
-  padding:2px;
-  font-family:'IBM Plex Mono',monospace;
-  font-size:10px;
-  letter-spacing:.04em;
-  color:#C9C3B2;
-  cursor:pointer;
-}
-.cadet-delete-link:hover{color:var(--red);text-decoration:underline;}
 
 /* Home view */
 .home-hero{
@@ -1072,7 +1065,7 @@ function App(){
                 <div className="cadet-danger-zone">
                   <button
                     type="button"
-                    className="cadet-delete-link"
+                    className="btn btn-danger"
                     onClick={() => {
                       const ok = window.confirm(
                         "Delete " + selected.last + ", " + selected.first + " permanently?\n\nThis removes them from the roster and deletes all of their logged discrepancies. This cannot be undone."
@@ -1080,7 +1073,7 @@ function App(){
                       if(ok) deleteCadet(selected.id);
                     }}
                   >
-                    Delete this cadet…
+                    Delete Cadet
                   </button>
                 </div>
               </React.Fragment>
