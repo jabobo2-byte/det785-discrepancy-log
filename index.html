@@ -586,7 +586,12 @@ function App(){
       }
       setRoster(finalRoster);
       setDiscrepancies(d || []);
-      if(finalRoster.length) setSelectedCadet(finalRoster[0].id);
+      if(finalRoster.length){
+        let lastId = null;
+        try{ lastId = localStorage.getItem("lastSelectedCadet"); }catch(e){}
+        const stillExists = lastId && finalRoster.some(c => c.id === lastId);
+        setSelectedCadet(stillExists ? lastId : finalRoster[0].id);
+      }
       setLoading(false);
     })();
   }, []);
@@ -628,6 +633,11 @@ function App(){
   const totalResolved = discrepancies.filter(d => d.status === "resolved").length;
 
   const cadetById = useCallback((id) => roster.find(c => c.id === id), [roster]);
+
+  useEffect(() => {
+    if(!selectedCadet) return;
+    try{ localStorage.setItem("lastSelectedCadet", selectedCadet); }catch(e){}
+  }, [selectedCadet]);
 
   function addDiscrepancy(entry){
     const next = [...discrepancies, {
