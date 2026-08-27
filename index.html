@@ -399,6 +399,25 @@ body{
 }
 .empty-state .big{font-family:'Oswald',sans-serif;font-size:20px;text-transform:uppercase;color:#544F42;margin-bottom:6px;}
 
+/* Delete-cadet: intentionally tucked away, low-contrast, requires confirm */
+.cadet-danger-zone{
+  margin-top:56px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+  text-align:right;
+}
+.cadet-delete-link{
+  background:none;
+  border:none;
+  padding:2px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;
+  letter-spacing:.04em;
+  color:#C9C3B2;
+  cursor:pointer;
+}
+.cadet-delete-link:hover{color:var(--red);text-decoration:underline;}
+
 /* Home view */
 .home-hero{
   text-align:center;
@@ -794,6 +813,12 @@ function App(){
     persistRoster(next);
   }
 
+  function deleteCadet(id){
+    persistRoster(roster.filter(c => c.id !== id));
+    persistDiscrepancies(discrepancies.filter(d => d.cadetId !== id));
+    if(selectedCadet === id) setSelectedCadet(null);
+  }
+
   const cadetEntries = useMemo(() => {
     if(!selectedCadet) return [];
     return discrepancies
@@ -982,6 +1007,21 @@ function App(){
                 {cadetEntries.map(e => (
                   <EntryRow key={e.id} entry={e} onToggle={toggleStatus} onDelete={deleteEntry} />
                 ))}
+
+                <div className="cadet-danger-zone">
+                  <button
+                    type="button"
+                    className="cadet-delete-link"
+                    onClick={() => {
+                      const ok = window.confirm(
+                        "Delete " + selected.last + ", " + selected.first + " permanently?\n\nThis removes them from the roster and deletes all of their logged discrepancies. This cannot be undone."
+                      );
+                      if(ok) deleteCadet(selected.id);
+                    }}
+                  >
+                    Delete this cadet…
+                  </button>
+                </div>
               </React.Fragment>
             )}
 
