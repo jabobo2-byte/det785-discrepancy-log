@@ -340,6 +340,31 @@ body{
   text-transform:uppercase;
   color:var(--ink);
 }
+.confirm-summary{
+  background:var(--paper);
+  border:1px solid var(--line);
+  border-left:4px solid var(--orange);
+  border-radius:3px;
+  padding:14px 16px;
+  margin-bottom:12px;
+}
+.confirm-summary-name{
+  font-family:'Oswald',sans-serif;
+  font-size:19px;
+  text-transform:uppercase;
+  color:var(--ink);
+}
+.confirm-summary-detail{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  color:#6B6555;
+  margin-top:4px;
+}
+.confirm-summary-note{
+  font-size:13px;
+  color:#6B6555;
+  margin:0 0 18px;
+}
 .btn{
   font-family:'IBM Plex Mono',monospace;
   font-size:12px;
@@ -1220,20 +1245,42 @@ function AddCadetModal({onClose, onSubmit}){
   const [last, setLast] = useState("");
   const [first, setFirst] = useState("");
   const [flight, setFlight] = useState(FLIGHT_ORDER[0]);
+  const [step, setStep] = useState("form"); // 'form' | 'confirm'
 
-  function submit(e){
+  function goToConfirm(e){
     e.preventDefault();
     if(!last.trim() || !first.trim()) return;
-    const ok = window.confirm("Add " + last.trim() + ", " + first.trim() + " to " + flight + " Flight?");
-    if(!ok) return;
+    setStep("confirm");
+  }
+
+  function confirmAdd(){
     onSubmit({last: last.trim(), first: first.trim(), flight});
+  }
+
+  if(step === "confirm"){
+    return (
+      <div className="modal-backdrop" onClick={(e)=>{ if(e.target===e.currentTarget) onClose(); }}>
+        <div className="modal">
+          <h3>Confirm New Cadet</h3>
+          <div className="confirm-summary">
+            <div className="confirm-summary-name">{last.trim()}, {first.trim()}</div>
+            <div className="confirm-summary-detail">{flight} Flight</div>
+          </div>
+          <p className="confirm-summary-note">This adds them to the shared roster for everyone using this site.</p>
+          <div className="modal-actions">
+            <button type="button" className="btn btn-ghost" onClick={()=>setStep("form")}>Back</button>
+            <button type="button" className="btn btn-primary" onClick={confirmAdd}>Confirm &amp; Add</button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="modal-backdrop" onClick={(e)=>{ if(e.target===e.currentTarget) onClose(); }}>
       <div className="modal">
         <h3>Add Cadet</h3>
-        <form onSubmit={submit}>
+        <form onSubmit={goToConfirm}>
           <div className="field">
             <label>Last name</label>
             <input type="text" value={last} onChange={e=>setLast(e.target.value)} required />
@@ -1250,7 +1297,7 @@ function AddCadetModal({onClose, onSubmit}){
           </div>
           <div className="modal-actions">
             <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn btn-primary">Add Cadet</button>
+            <button type="submit" className="btn btn-primary">Continue</button>
           </div>
         </form>
       </div>
