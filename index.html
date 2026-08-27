@@ -109,46 +109,22 @@ body{
 .hero-stat .lbl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#C9D6F7;margin-top:4px;}
 .hero-stat.open .num{color:#FFD9C9;}
 
-.app{display:flex;min-height:calc(100vh - 108px);}
+.app-body{display:block;}
 
-/* ---------- Sidebar ---------- */
-.sidebar{
-  width:290px;
-  flex-shrink:0;
-  background:var(--navy-dark);
-  color:#E8E9EE;
+/* ---------- Topbar (now holds the Home / By Cadet / All Entries switch) ---------- */
+.topbar{
+  padding:18px 32px;
+  border-bottom:2px solid var(--ink);
   display:flex;
-  flex-direction:column;
-  border-right:3px solid var(--ink);
-}
-.sidebar-head{
-  padding:22px 20px 16px;
-  border-bottom:1px solid rgba(255,255,255,0.15);
-}
-.sidebar-head .eyebrow{
-  font-family:'IBM Plex Mono',monospace;
-  font-size:11px;
-  letter-spacing:.14em;
-  color:#93A2C4;
-  text-transform:uppercase;
-}
-.sidebar-head h1{
-  font-family:'Oswald',sans-serif;
-  font-weight:600;
-  font-size:22px;
-  letter-spacing:.02em;
-  margin:4px 0 2px;
-  text-transform:uppercase;
-}
-.sidebar-head .sub{
-  font-size:12px;
-  color:#93A2C4;
-  font-family:'IBM Plex Mono',monospace;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:16px;
+  background:var(--paper-raised);
 }
 .view-toggle{
   display:flex;
-  margin:14px 20px 0;
-  border:1px solid rgba(255,255,255,0.25);
+  border:1px solid var(--line-strong);
   border-radius:3px;
   overflow:hidden;
 }
@@ -156,36 +132,90 @@ body{
   flex:1;
   background:transparent;
   border:none;
-  color:#B7C0D6;
+  border-right:1px solid var(--line-strong);
+  color:var(--navy);
   font-family:'IBM Plex Mono',monospace;
   font-size:11px;
   letter-spacing:.06em;
-  padding:8px 4px;
+  padding:10px 16px;
   cursor:pointer;
   text-transform:uppercase;
 }
-.view-toggle button.active{background:var(--navy-light);color:#fff;}
+.view-toggle button:last-child{border-right:none;}
+.view-toggle button:hover:not(.active){background:var(--paper);}
+.view-toggle button.active{background:var(--navy-dark);color:#fff;}
 
-.roster{
-  flex:1;
-  overflow-y:auto;
-  padding:14px 0 20px;
+.search-box{
+  display:flex;
+  gap:8px;
+  align-items:center;
 }
-.flight-group{margin-bottom:16px;padding:0 20px;}
+.search-box input, .search-box select{
+  font-family:'IBM Plex Sans',sans-serif;
+  font-size:13px;
+  padding:8px 10px;
+  border:1px solid var(--line-strong);
+  border-radius:3px;
+  background:#fff;
+  color:var(--ink);
+}
+
+.content{padding:28px 32px 60px;}
+
+/* ---------- Roster panel (shown centered above the record, By Cadet tab only) ---------- */
+.roster-panel{
+  max-width:760px;
+  margin:0 auto 32px;
+  background:var(--navy-dark);
+  color:#E8E9EE;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,0.12);
+  box-shadow:0 8px 20px rgba(27,33,48,0.16);
+  overflow:hidden;
+}
+.roster-panel-head{padding:20px 24px 4px;}
+.roster-panel-title{
+  font-family:'Oswald',sans-serif;
+  font-weight:600;
+  font-size:15px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:#fff;
+  margin-bottom:12px;
+}
+.roster-panel-flights{padding:8px 0 4px;}
+.roster-panel-foot{
+  padding:14px 24px 18px;
+  border-top:1px solid rgba(255,255,255,0.15);
+}
+
+.flight-group{margin-bottom:16px;padding:0 24px;}
 .flight-label{
   display:flex;
   align-items:center;
   justify-content:space-between;
+  width:100%;
   font-family:'Oswald',sans-serif;
   font-weight:600;
   font-size:16px;
   letter-spacing:.06em;
   text-transform:uppercase;
   color:#fff;
+  background:transparent;
+  border:none;
   padding:0 0 8px;
   border-bottom:2px solid var(--orange);
   margin-bottom:10px;
+  cursor:pointer;
 }
+.flight-label-text{display:flex;align-items:center;gap:8px;}
+.flight-chevron{
+  display:inline-block;
+  font-size:11px;
+  color:var(--orange);
+  transition:transform .15s ease;
+}
+.flight-label.expanded .flight-chevron{transform:rotate(90deg);}
 .flight-open-ct{
   font-size:10px;
   letter-spacing:.06em;
@@ -194,7 +224,7 @@ body{
   padding:2px 7px;
   border-radius:10px;
 }
-.roster-search{padding:0 20px;margin-bottom:18px;}
+.roster-search{margin-bottom:6px;}
 .roster-search-input{
   width:100%;
   font-family:'IBM Plex Sans',sans-serif;
@@ -241,16 +271,12 @@ body{
   margin-left:8px;
 }
 .roster-no-results{
-  padding:10px 20px;
+  padding:10px 24px;
   font-family:'IBM Plex Mono',monospace;
   font-size:12px;
   color:#93A2C4;
 }
 
-.sidebar-foot{
-  padding:12px 20px 16px;
-  border-top:1px solid rgba(255,255,255,0.15);
-}
 .add-cadet-btn{
   width:100%;
   background:transparent;
@@ -265,44 +291,6 @@ body{
   cursor:pointer;
 }
 .add-cadet-btn:hover{border-color:var(--orange);color:var(--orange);}
-
-/* ---------- Main ---------- */
-.main{flex:1;display:flex;flex-direction:column;min-width:0;}
-
-.topbar{
-  padding:20px 32px;
-  border-bottom:2px solid var(--ink);
-  display:flex;
-  align-items:flex-end;
-  justify-content:space-between;
-  flex-wrap:wrap;
-  gap:16px;
-  background:var(--paper-raised);
-}
-.topbar-view-label{
-  font-family:'IBM Plex Mono',monospace;
-  font-size:12px;
-  letter-spacing:.1em;
-  text-transform:uppercase;
-  color:#6B6555;
-}
-
-.search-box{
-  display:flex;
-  gap:8px;
-  align-items:center;
-}
-.search-box input, .search-box select{
-  font-family:'IBM Plex Sans',sans-serif;
-  font-size:13px;
-  padding:8px 10px;
-  border:1px solid var(--line-strong);
-  border-radius:3px;
-  background:#fff;
-  color:var(--ink);
-}
-
-.content{flex:1;overflow-y:auto;padding:28px 32px 60px;}
 
 /* Cadet header */
 .cadet-header{
@@ -548,12 +536,10 @@ body{
 .loading{padding:40px;text-align:center;color:#8A8471;font-family:'IBM Plex Mono',monospace;font-size:13px;}
 
 @media (max-width: 760px){
-  .app{flex-direction:column;min-height:0;}
-  .sidebar{width:100%;max-height:none;}
-  .roster{flex:none;overflow-y:visible;max-height:none;}
-  .main{flex:none;}
-  .content{flex:none;overflow-y:visible;padding:20px 16px 60px;}
-  .topbar{padding:16px;}
+  .content{padding:20px 16px 60px;}
+  .topbar{padding:16px;align-items:stretch;}
+  .view-toggle{width:100%;}
+  .roster-panel{margin:0 0 24px;}
 }
 </style>
 </head>
@@ -669,6 +655,7 @@ function App(){
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [rosterSearch, setRosterSearch] = useState("");
+  const [expandedFlights, setExpandedFlights] = useState(() => new Set());
 
   useEffect(() => {
     (async () => {
@@ -746,6 +733,25 @@ function App(){
     if(!selectedCadet) return;
     try{ localStorage.setItem("lastSelectedCadet", selectedCadet); }catch(e){}
   }, [selectedCadet]);
+
+  useEffect(() => {
+    const c = selectedCadet ? cadetById(selectedCadet) : null;
+    if(!c) return;
+    setExpandedFlights(prev => {
+      if(prev.has(c.flight)) return prev;
+      const next = new Set(prev);
+      next.add(c.flight);
+      return next;
+    });
+  }, [selectedCadet, cadetById]);
+
+  function toggleFlight(f){
+    setExpandedFlights(prev => {
+      const next = new Set(prev);
+      if(next.has(f)) next.delete(f); else next.add(f);
+      return next;
+    });
+  }
 
   function addDiscrepancy(entry){
     const next = [...discrepancies, {
@@ -832,157 +838,168 @@ function App(){
         </div>
       </div>
     </div>
-    <div className="app">
-      <div className="sidebar">
-        <div className="sidebar-head">
-          <div className="view-toggle">
-            <button className={view==="home"?"active":""} onClick={()=>setView("home")}>Home</button>
-            <button className={view==="cadet"?"active":""} onClick={()=>setView("cadet")}>By Cadet</button>
-            <button className={view==="all"?"active":""} onClick={()=>setView("all")}>All Entries</button>
-          </div>
+    <div className="app-body">
+      <div className="topbar">
+        <div className="view-toggle">
+          <button className={view==="home"?"active":""} onClick={()=>setView("home")}>Home</button>
+          <button className={view==="cadet"?"active":""} onClick={()=>setView("cadet")}>By Cadet</button>
+          <button className={view==="all"?"active":""} onClick={()=>setView("all")}>All Entries</button>
         </div>
-        <div className="roster">
-          <div className="roster-search">
+        {view === "all" && (
+          <div className="search-box">
+            <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}>
+              <option value="all">All statuses</option>
+              <option value="open">Open only</option>
+              <option value="resolved">Resolved only</option>
+            </select>
             <input
               type="text"
-              className="roster-search-input"
-              placeholder="Search cadet name…"
-              value={rosterSearch}
-              onChange={e=>setRosterSearch(e.target.value)}
+              placeholder="Search name, category, notes…"
+              value={searchTerm}
+              onChange={e=>setSearchTerm(e.target.value)}
             />
           </div>
-          {FLIGHT_ORDER.filter(f => filteredFlights[f] && filteredFlights[f].length).map(f => {
-            const flightOpenCt = flights[f].reduce((sum,c) => sum + (openCountByCadet[c.id]||0), 0);
-            return (
-              <div className="flight-group" key={f}>
-                <div className="flight-label">
-                  {f} Flight
-                  {flightOpenCt > 0 && <span className="flight-open-ct">{flightOpenCt} open</span>}
-                </div>
-                <div className="cadet-list">
-                  {filteredFlights[f].map(c => {
-                    const openCt = openCountByCadet[c.id] || 0;
-                    const isActive = selectedCadet === c.id;
-                    return (
-                      <button
-                        key={c.id}
-                        type="button"
-                        className={"cadet-row" + (isActive ? " active" : "")}
-                        onClick={() => { setSelectedCadet(c.id); setView("cadet"); }}
-                      >
-                        <span className="cadet-row-name">{c.last}, {c.first}</span>
-                        {openCt > 0 && <span className="cadet-row-open">{openCt}</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-          {rosterSearchTerm && !rosterHasMatches && (
-            <div className="roster-no-results">No cadets match "{rosterSearch.trim()}"</div>
-          )}
-        </div>
-        <div className="sidebar-foot">
-          <button className="add-cadet-btn" onClick={()=>setShowAddCadet(true)}>+ Add Cadet</button>
-        </div>
+        )}
+        {saveError && <div style={{color:"var(--red)", fontFamily:"'IBM Plex Mono',monospace", fontSize:12}}>{saveError}</div>}
       </div>
 
-      <div className="main">
-        <div className="topbar">
-          <div className="topbar-view-label">
-            {view === "home" ? "Home" : view === "cadet" ? "Cadet Record" : "All Discrepancies"}
-          </div>
-          {view === "all" && (
-            <div className="search-box">
-              <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}>
-                <option value="all">All statuses</option>
-                <option value="open">Open only</option>
-                <option value="resolved">Resolved only</option>
-              </select>
-              <input
-                type="text"
-                placeholder="Search name, category, notes…"
-                value={searchTerm}
-                onChange={e=>setSearchTerm(e.target.value)}
-              />
+      <div className="content">
+        {view === "home" && (
+          <div className="home-view">
+            <div className="home-hero">
+              <div className="home-hero-eyebrow">University of Memphis · AFROTC Det 785</div>
+              <h2>Discrepancy Log</h2>
+              <p>Track AFI 36-2903 discrepancies, warnings, CAMs, and LOCs across all four flights.</p>
+              <div className="home-actions">
+                <button className="btn btn-primary" onClick={()=>setView("cadet")}>Browse by Cadet</button>
+                <button className="btn btn-ghost" onClick={()=>setView("all")}>View All Entries</button>
+              </div>
             </div>
-          )}
-          {saveError && <div style={{color:"var(--red)", fontFamily:"'IBM Plex Mono',monospace", fontSize:12}}>{saveError}</div>}
-        </div>
+            <div className="home-summary-grid">
+              {FLIGHT_ORDER.filter(f => flights[f] && flights[f].length).map(f => {
+                const flightOpenCt = flights[f].reduce((sum,c) => sum + (openCountByCadet[c.id]||0), 0);
+                return (
+                  <div className="home-flight-card" key={f}>
+                    <div className="home-flight-name">{f} Flight</div>
+                    <div className="home-flight-count">{flights[f].length} cadets</div>
+                    <div className={"home-flight-open" + (flightOpenCt>0 ? " has-open":"")}>
+                      {flightOpenCt} open discrepanc{flightOpenCt===1?"y":"ies"}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-        <div className="content">
-          {view === "home" && (
-            <div className="home-view">
-              <div className="home-hero">
-                <div className="home-hero-eyebrow">University of Memphis · AFROTC Det 785</div>
-                <h2>Discrepancy Log</h2>
-                <p>Track AFI 36-2903 discrepancies, warnings, CAMs, and LOCs across all four flights.</p>
-                <div className="home-actions">
-                  <button className="btn btn-primary" onClick={()=>setView("cadet")}>Browse by Cadet</button>
-                  <button className="btn btn-ghost" onClick={()=>setView("all")}>View All Entries</button>
+        {view === "cadet" && (
+          <React.Fragment>
+            <div className="roster-panel">
+              <div className="roster-panel-head">
+                <div className="roster-panel-title">Find a Cadet</div>
+                <div className="roster-search">
+                  <input
+                    type="text"
+                    className="roster-search-input"
+                    placeholder="Search cadet name…"
+                    value={rosterSearch}
+                    onChange={e=>setRosterSearch(e.target.value)}
+                  />
                 </div>
               </div>
-              <div className="home-summary-grid">
-                {FLIGHT_ORDER.filter(f => flights[f] && flights[f].length).map(f => {
+              <div className="roster-panel-flights">
+                {FLIGHT_ORDER.filter(f => filteredFlights[f] && filteredFlights[f].length).map(f => {
                   const flightOpenCt = flights[f].reduce((sum,c) => sum + (openCountByCadet[c.id]||0), 0);
+                  const isExpanded = rosterSearchTerm ? true : expandedFlights.has(f);
                   return (
-                    <div className="home-flight-card" key={f}>
-                      <div className="home-flight-name">{f} Flight</div>
-                      <div className="home-flight-count">{flights[f].length} cadets</div>
-                      <div className={"home-flight-open" + (flightOpenCt>0 ? " has-open":"")}>
-                        {flightOpenCt} open discrepanc{flightOpenCt===1?"y":"ies"}
-                      </div>
+                    <div className="flight-group" key={f}>
+                      <button
+                        type="button"
+                        className={"flight-label" + (isExpanded ? " expanded" : "")}
+                        onClick={() => toggleFlight(f)}
+                      >
+                        <span className="flight-label-text">
+                          <span className="flight-chevron">▸</span>
+                          {f} Flight
+                        </span>
+                        {flightOpenCt > 0 && <span className="flight-open-ct">{flightOpenCt} open</span>}
+                      </button>
+                      {isExpanded && (
+                        <div className="cadet-list">
+                          {filteredFlights[f].map(c => {
+                            const openCt = openCountByCadet[c.id] || 0;
+                            const isActive = selectedCadet === c.id;
+                            return (
+                              <button
+                                key={c.id}
+                                type="button"
+                                className={"cadet-row" + (isActive ? " active" : "")}
+                                onClick={() => { setSelectedCadet(c.id); setView("cadet"); }}
+                              >
+                                <span className="cadet-row-name">{c.last}, {c.first}</span>
+                                {openCt > 0 && <span className="cadet-row-open">{openCt}</span>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
+                {rosterSearchTerm && !rosterHasMatches && (
+                  <div className="roster-no-results">No cadets match "{rosterSearch.trim()}"</div>
+                )}
+              </div>
+              <div className="roster-panel-foot">
+                <button className="add-cadet-btn" onClick={()=>setShowAddCadet(true)}>+ Add Cadet</button>
               </div>
             </div>
-          )}
-          {view === "cadet" && selected && (
-            <React.Fragment>
-              <div className="cadet-header">
-                <div>
-                  <h2>{selected.last}, {selected.first}</h2>
-                  <div className="meta">{selected.flight} Flight · {cadetEntries.filter(e=>e.status==="open").length} open discrepanc{cadetEntries.filter(e=>e.status==="open").length===1?"y":"ies"}</div>
+
+            {selected && (
+              <React.Fragment>
+                <div className="cadet-header">
+                  <div>
+                    <h2>{selected.last}, {selected.first}</h2>
+                    <div className="meta">{selected.flight} Flight · {cadetEntries.filter(e=>e.status==="open").length} open discrepanc{cadetEntries.filter(e=>e.status==="open").length===1?"y":"ies"}</div>
+                  </div>
+                  <button className="btn btn-primary" onClick={()=>setShowLogModal(true)}>+ Log Discrepancy</button>
                 </div>
-                <button className="btn btn-primary" onClick={()=>setShowLogModal(true)}>+ Log Discrepancy</button>
+
+                {cadetEntries.length === 0 && (
+                  <div className="empty-state">
+                    <div className="big">No discrepancies on file</div>
+                    <div>This cadet has a clean record.</div>
+                  </div>
+                )}
+
+                {cadetEntries.map(e => (
+                  <EntryRow key={e.id} entry={e} onToggle={toggleStatus} onDelete={deleteEntry} />
+                ))}
+              </React.Fragment>
+            )}
+
+            {!selected && (
+              <div className="empty-state">
+                <div className="big">Select a cadet</div>
+                <div>Choose a name above to view their record.</div>
               </div>
+            )}
+          </React.Fragment>
+        )}
 
-              {cadetEntries.length === 0 && (
-                <div className="empty-state">
-                  <div className="big">No discrepancies on file</div>
-                  <div>This cadet has a clean record.</div>
-                </div>
-              )}
-
-              {cadetEntries.map(e => (
-                <EntryRow key={e.id} entry={e} onToggle={toggleStatus} onDelete={deleteEntry} />
-              ))}
-            </React.Fragment>
-          )}
-
-          {view === "cadet" && !selected && (
-            <div className="empty-state">
-              <div className="big">Select a cadet</div>
-              <div>Choose a name from the roster to view their record.</div>
-            </div>
-          )}
-
-          {view === "all" && (
-            <div className="all-list">
-              {allEntries.length === 0 && (
-                <div className="empty-state">
-                  <div className="big">No matching entries</div>
-                  <div>Try adjusting your filters.</div>
-                </div>
-              )}
-              {allEntries.map(e => (
-                <EntryRow key={e.id} entry={e} onToggle={toggleStatus} onDelete={deleteEntry} cadet={cadetById(e.cadetId)} showCadet />
-              ))}
-            </div>
-          )}
-        </div>
+        {view === "all" && (
+          <div className="all-list">
+            {allEntries.length === 0 && (
+              <div className="empty-state">
+                <div className="big">No matching entries</div>
+                <div>Try adjusting your filters.</div>
+              </div>
+            )}
+            {allEntries.map(e => (
+              <EntryRow key={e.id} entry={e} onToggle={toggleStatus} onDelete={deleteEntry} cadet={cadetById(e.cadetId)} showCadet />
+            ))}
+          </div>
+        )}
       </div>
 
       {showLogModal && selected && (
@@ -1001,6 +1018,7 @@ function App(){
     </React.Fragment>
   );
 }
+
 
 function EntryRow({entry, onToggle, onDelete, cadet, showCadet}){
   const ACTION_LABELS = {verbal:"Verbal Warning", cam:"CAM", loc:"LOC"};
