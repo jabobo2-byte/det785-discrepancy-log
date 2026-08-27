@@ -117,10 +117,17 @@ body{
   border-bottom:2px solid var(--ink);
   display:flex;
   align-items:center;
-  justify-content:space-between;
+  justify-content:center;
   flex-wrap:wrap;
   gap:16px;
   background:var(--paper-raised);
+  position:relative;
+}
+.topbar .save-error{
+  position:absolute;
+  right:32px;
+  top:50%;
+  transform:translateY(-50%);
 }
 .view-toggle{
   display:flex;
@@ -860,7 +867,7 @@ function App(){
             />
           </div>
         )}
-        {saveError && <div style={{color:"var(--red)", fontFamily:"'IBM Plex Mono',monospace", fontSize:12}}>{saveError}</div>}
+        {saveError && <div className="save-error" style={{color:"var(--red)", fontFamily:"'IBM Plex Mono',monospace", fontSize:12}}>{saveError}</div>}
       </div>
 
       <div className="content">
@@ -934,7 +941,7 @@ function App(){
                                 key={c.id}
                                 type="button"
                                 className={"cadet-row" + (isActive ? " active" : "")}
-                                onClick={() => { setSelectedCadet(c.id); setView("cadet"); }}
+                                onClick={() => { setSelectedCadet(c.id); setView("cadet"); setShowLogModal(true); }}
                               >
                                 <span className="cadet-row-name">{c.last}, {c.first}</span>
                                 {openCt > 0 && <span className="cadet-row-open">{openCt}</span>}
