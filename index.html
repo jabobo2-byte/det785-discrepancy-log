@@ -127,11 +127,39 @@ body{
   position:relative;
 }
 .topbar .save-error{
+  order:5;
+}
+.account-box{
   position:absolute;
   right:32px;
   top:50%;
   transform:translateY(-50%);
+  display:flex;
+  align-items:center;
+  gap:10px;
 }
+.account-email{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  color:#6B6555;
+  max-width:180px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.account-admin-btn, .account-signout-btn{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  padding:6px 12px;
+  border-radius:3px;
+  cursor:pointer;
+}
+.account-admin-btn{background:var(--navy);border:1px solid var(--navy);color:#fff;}
+.account-admin-btn:hover{background:var(--navy-dark);}
+.account-signout-btn{background:#fff;border:1px solid var(--line-strong);color:var(--ink);}
+.account-signout-btn:hover{border-color:var(--ink);}
 .view-toggle{
   display:flex;
   border:1px solid var(--line-strong);
@@ -666,11 +694,97 @@ body{
 
 .loading{padding:40px;text-align:center;color:#8A8471;font-family:'IBM Plex Mono',monospace;font-size:13px;}
 
+/* ---------- Auth screens ---------- */
+.auth-screen{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--navy-dark);
+  padding:24px;
+}
+.auth-card{
+  max-width:420px;
+  background:#fff;
+  border-radius:8px;
+  padding:36px 32px;
+  text-align:center;
+  box-shadow:0 12px 32px rgba(0,0,0,0.3);
+}
+.auth-card .hero-badge{margin:0 auto 16px;display:inline-block;}
+.auth-card h1{
+  font-family:'Oswald',sans-serif;
+  font-size:26px;
+  text-transform:uppercase;
+  margin:0 0 12px;
+}
+.auth-card p{font-size:14px;color:#6B6555;line-height:1.5;margin:0 0 22px;}
+.auth-card .btn{width:100%;padding:12px;font-size:13px;}
+
+/* ---------- Admin panel ---------- */
+.admin-modal{max-width:520px;}
+.admin-section{margin-bottom:22px;}
+.admin-section-title{
+  font-family:'Oswald',sans-serif;
+  font-size:15px;
+  text-transform:uppercase;
+  letter-spacing:.03em;
+  margin-bottom:10px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.admin-count{
+  background:var(--red);
+  color:#fff;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  padding:2px 7px;
+  border-radius:10px;
+}
+.admin-empty{font-size:13px;color:#8A8471;}
+.admin-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:8px 0;
+  border-bottom:1px solid var(--line);
+  flex-wrap:wrap;
+}
+.admin-row-email{font-size:13px;color:var(--ink);display:flex;align-items:center;gap:8px;}
+.admin-row-actions{display:flex;gap:8px;}
+.admin-row-actions .btn{padding:6px 12px;font-size:11px;}
+.admin-badge{
+  background:var(--navy);
+  color:#fff;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  padding:2px 6px;
+  border-radius:2px;
+}
+.admin-add-form{display:flex;gap:8px;}
+.admin-add-form input{
+  flex:1;
+  font-family:'IBM Plex Sans',sans-serif;
+  font-size:13px;
+  padding:9px 11px;
+  border:1px solid var(--line-strong);
+  border-radius:3px;
+}
+.admin-add-form .btn{padding:9px 16px;font-size:11px;}
+.admin-note{font-size:12px;color:#8A8471;margin-top:6px;}
+.admin-err{color:var(--red);font-size:13px;margin-bottom:10px;}
+
 @media (max-width: 760px){
   .content{padding:20px 16px 60px;}
   .topbar{padding:16px;align-items:stretch;}
   .view-toggle{width:100%;}
   .roster-panel{margin:0 0 24px;}
+  .account-box{position:static;transform:none;justify-content:center;width:100%;order:6;}
+  .account-email{max-width:none;}
 }
 </style>
 </head>
@@ -766,16 +880,11 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+const auth = firebase.auth();
 
-// Sign in anonymously so writes (add/edit/delete cadet, log discrepancy) are
-// only allowed from a signed-in session, per the Database Rules. Reads stay
-// public so the page loads instantly without waiting on auth.
-const authReady = new Promise((resolve) => {
-  const unsub = firebase.auth().onAuthStateChanged((user) => {
-    if(user){ unsub(); resolve(user); }
-  });
-});
-firebase.auth().signInAnonymously().catch((e) => console.error("Anonymous sign-in failed:", e));
+function sanitizeEmailKey(email){
+  return (email || "").toLowerCase().trim().replace(/\./g, ",");
+}
 
 async function loadShared(key, fallback){
   try{
@@ -788,7 +897,6 @@ async function loadShared(key, fallback){
 }
 async function saveShared(key, value){
   try{
-    await authReady;
     await db.ref(key).set(value);
     return true;
   }catch(e){
@@ -796,7 +904,8 @@ async function saveShared(key, value){
   }
 }
 
-function App(){
+function App({currentUser, isAdmin, onSignOut}){
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saveError, setSaveError] = useState("");
   const [roster, setRoster] = useState([]);
@@ -1123,6 +1232,11 @@ function App(){
           </div>
         )}
         {saveError && <div className="save-error" style={{color:"var(--red)", fontFamily:"'IBM Plex Mono',monospace", fontSize:12}}>{saveError}</div>}
+        <div className="account-box">
+          <span className="account-email">{currentUser && currentUser.email}</span>
+          {isAdmin && <button type="button" className="account-admin-btn" onClick={()=>setShowAdminPanel(true)}>Admin</button>}
+          <button type="button" className="account-signout-btn" onClick={onSignOut}>Sign Out</button>
+        </div>
       </div>
 
       <div className="content">
@@ -1472,6 +1586,10 @@ function App(){
           onSubmit={(newFlight)=>{ updateCadetFlight(selected.id, newFlight); setShowEditFlight(false); }}
         />
       )}
+
+      {showAdminPanel && (
+        <AdminPanel currentUser={currentUser} onClose={()=>setShowAdminPanel(false)} />
+      )}
     </div>
     </React.Fragment>
   );
@@ -1761,8 +1879,242 @@ function EditFlightModal({cadet, onClose, onSubmit}){
   );
 }
 
+function AdminPanel({currentUser, onClose}){
+  const [loading, setLoading] = useState(true);
+  const [allowed, setAllowed] = useState({});
+  const [pending, setPending] = useState({});
+  const [newEmail, setNewEmail] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  async function refresh(){
+    setLoading(true);
+    const [a, p] = await Promise.all([
+      loadShared("allowedEmails", {}),
+      loadShared("pendingRequests", {})
+    ]);
+    setAllowed(a || {});
+    setPending(p || {});
+    setLoading(false);
+  }
+
+  useEffect(() => { refresh(); }, []);
+
+  async function approve(key, email){
+    setBusy(true); setErr("");
+    try{
+      await db.ref("allowedEmails/" + key).set({email, admin: false, approvedAt: new Date().toISOString()});
+      await db.ref("pendingRequests/" + key).remove();
+      await refresh();
+    }catch(e){ setErr("Couldn't approve — try again."); }
+    setBusy(false);
+  }
+
+  async function deny(key){
+    setBusy(true); setErr("");
+    try{
+      await db.ref("pendingRequests/" + key).remove();
+      await refresh();
+    }catch(e){ setErr("Couldn't remove request — try again."); }
+    setBusy(false);
+  }
+
+  async function addDirectly(e){
+    e.preventDefault();
+    const email = newEmail.trim().toLowerCase();
+    if(!email) return;
+    setBusy(true); setErr("");
+    try{
+      const key = sanitizeEmailKey(email);
+      await db.ref("allowedEmails/" + key).set({email, admin: false, approvedAt: new Date().toISOString()});
+      await db.ref("pendingRequests/" + key).remove();
+      setNewEmail("");
+      await refresh();
+    }catch(e){ setErr("Couldn't add that email — try again."); }
+    setBusy(false);
+  }
+
+  async function revoke(key, email){
+    if(email === currentUser.email){ alert("You can't revoke your own access."); return; }
+    const ok = window.confirm("Remove access for " + email + "?");
+    if(!ok) return;
+    setBusy(true); setErr("");
+    try{
+      await db.ref("allowedEmails/" + key).remove();
+      await refresh();
+    }catch(e){ setErr("Couldn't remove — try again."); }
+    setBusy(false);
+  }
+
+  async function toggleAdmin(key, entry){
+    if(entry.email === currentUser.email){ alert("You can't change your own admin status."); return; }
+    setBusy(true); setErr("");
+    try{
+      await db.ref("allowedEmails/" + key + "/admin").set(!entry.admin);
+      await refresh();
+    }catch(e){ setErr("Couldn't update — try again."); }
+    setBusy(false);
+  }
+
+  const pendingList = Object.entries(pending);
+  const allowedList = Object.entries(allowed).sort((a,b) => (a[1].email||"").localeCompare(b[1].email||""));
+
+  return (
+    <div className="modal-backdrop" onClick={(e)=>{ if(e.target===e.currentTarget) onClose(); }}>
+      <div className="modal admin-modal">
+        <h3>Manage Access</h3>
+        {loading ? (
+          <div className="loading">Loading…</div>
+        ) : (
+          <React.Fragment>
+            <div className="admin-section">
+              <div className="admin-section-title">Pending Requests {pendingList.length > 0 && <span className="admin-count">{pendingList.length}</span>}</div>
+              {pendingList.length === 0 && <div className="admin-empty">No pending requests.</div>}
+              {pendingList.map(([key, req]) => (
+                <div className="admin-row" key={key}>
+                  <span className="admin-row-email">{req.email}</span>
+                  <div className="admin-row-actions">
+                    <button className="btn btn-primary" disabled={busy} onClick={()=>approve(key, req.email)}>Approve</button>
+                    <button className="btn btn-ghost" disabled={busy} onClick={()=>deny(key)}>Deny</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="admin-section">
+              <div className="admin-section-title">Approved Emails</div>
+              {allowedList.length === 0 && <div className="admin-empty">No one approved yet.</div>}
+              {allowedList.map(([key, entry]) => (
+                <div className="admin-row" key={key}>
+                  <span className="admin-row-email">
+                    {entry.email}
+                    {entry.admin && <span className="admin-badge">Admin</span>}
+                  </span>
+                  <div className="admin-row-actions">
+                    <button className="btn btn-ghost" disabled={busy} onClick={()=>toggleAdmin(key, entry)}>
+                      {entry.admin ? "Remove Admin" : "Make Admin"}
+                    </button>
+                    <button className="btn btn-danger" disabled={busy} onClick={()=>revoke(key, entry.email)}>Revoke</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="admin-section">
+              <div className="admin-section-title">Approve a New Email</div>
+              <form className="admin-add-form" onSubmit={addDirectly}>
+                <input
+                  type="email"
+                  placeholder="name@memphis.edu"
+                  value={newEmail}
+                  onChange={e=>setNewEmail(e.target.value)}
+                  required
+                />
+                <button type="submit" className="btn btn-primary" disabled={busy}>Add</button>
+              </form>
+              <div className="admin-note">This lets someone in before they've ever signed in.</div>
+            </div>
+
+            {err && <div className="admin-err">{err}</div>}
+          </React.Fragment>
+        )}
+        <div className="modal-actions">
+          <button type="button" className="btn btn-ghost" onClick={onClose}>Close</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AuthGate(){
+  const [authUser, setAuthUser] = useState(undefined);
+  const [status, setStatus] = useState("checking"); // checking | signed-out | pending | approved
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [authError, setAuthError] = useState("");
+
+  useEffect(() => {
+    const unsub = auth.onAuthStateChanged(async (user) => {
+      setAuthUser(user);
+      if(!user){
+        setStatus("signed-out");
+        return;
+      }
+      setStatus("checking");
+      try{
+        const key = sanitizeEmailKey(user.email);
+        const allSnap = await db.ref("allowedEmails").once("value");
+        const allVal = allSnap.val();
+        if(!allVal){
+          // First person ever to sign in becomes the founding admin.
+          await db.ref("allowedEmails/" + key).set({email: user.email, admin: true, approvedAt: new Date().toISOString()});
+          setIsAdmin(true);
+          setStatus("approved");
+          return;
+        }
+        const mine = allVal[key];
+        if(mine){
+          setIsAdmin(!!mine.admin);
+          setStatus("approved");
+        }else{
+          await db.ref("pendingRequests/" + key).set({email: user.email, requestedAt: new Date().toISOString()});
+          setStatus("pending");
+        }
+      }catch(e){
+        setAuthError("Something went wrong checking your access. Try refreshing the page.");
+        setStatus("signed-out");
+      }
+    });
+    return unsub;
+  }, []);
+
+  function signIn(){
+    setAuthError("");
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).catch((e) => {
+      setAuthError("Sign-in failed: " + (e && e.message ? e.message : "please try again."));
+    });
+  }
+
+  function signOutUser(){
+    auth.signOut();
+  }
+
+  if(status === "checking"){
+    return <div className="loading">Checking your access…</div>;
+  }
+
+  if(status === "signed-out"){
+    return (
+      <div className="auth-screen">
+        <div className="auth-card">
+          <div className="hero-badge">Official Cadet Tracker</div>
+          <h1>AFROTC Det 785</h1>
+          <p>Sign in with your Google account to access the tracker. Only emails approved by the det admin can get in.</p>
+          <button className="btn btn-primary" onClick={signIn}>Sign in with Google</button>
+          {authError && <div className="admin-err">{authError}</div>}
+        </div>
+      </div>
+    );
+  }
+
+  if(status === "pending"){
+    return (
+      <div className="auth-screen">
+        <div className="auth-card">
+          <div className="hero-badge">Official Cadet Tracker</div>
+          <h1>Access Pending</h1>
+          <p>You're signed in as <strong>{authUser.email}</strong>, but this email hasn't been approved yet. Ask the det admin to approve you in the Admin panel, then refresh this page.</p>
+          <button className="btn btn-ghost" onClick={signOutUser}>Sign Out</button>
+        </div>
+      </div>
+    );
+  }
+
+  return <App currentUser={authUser} isAdmin={isAdmin} onSignOut={signOutUser} />;
+}
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);
+root.render(<AuthGate />);
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
