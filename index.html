@@ -1044,7 +1044,7 @@ function App(){
     <React.Fragment>
     <div className="hero">
       <div className="hero-brand" onClick={()=>setView("home")} style={{cursor:"pointer"}}>
-        <div className="hero-badge">Discrepancy Log</div>
+        <div className="hero-badge">Official Cadet Tracker</div>
         <div className="school">University of Memphis</div>
         <h1>AFROTC Det 785</h1>
         <div className="det">AFI 36-2903 · Cadet Portal</div>
@@ -1076,7 +1076,7 @@ function App(){
       <div className="topbar">
         <div className="view-toggle">
           <button className={view==="home"?"active":""} onClick={()=>setView("home")}>Home</button>
-          <button className={view==="cadet"?"active":""} onClick={()=>setView("cadet")}>Discrepancy</button>
+          <button className={view==="cadet"?"active":""} onClick={()=>setView("cadet")}>Discrepancies</button>
           <button className={view==="idt"?"active":""} onClick={()=>setView("idt")}>Individual Cadet Training (IDT)</button>
           <button className={view==="all"?"active":""} onClick={()=>setView("all")}>All Entries</button>
         </div>
