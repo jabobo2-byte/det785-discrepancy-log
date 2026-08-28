@@ -102,12 +102,15 @@ body{
   position:relative;
   z-index:1;
   display:flex;
-  gap:26px;
+  gap:22px;
+  flex-wrap:wrap;
 }
 .hero-stat{font-family:'IBM Plex Mono',monospace;text-align:center;}
 .hero-stat .num{font-size:26px;font-weight:700;line-height:1;color:#fff;}
-.hero-stat .lbl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#C9D6F7;margin-top:4px;}
+.hero-stat .lbl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#C9D6F7;margin-top:4px;white-space:nowrap;}
 .hero-stat.open .num{color:#FFD9C9;}
+.hero-stat.idt-stat.open .num{color:#BFD4FF;}
+.hero-stat.idt-stat .lbl{color:#A9BEEA;}
 
 .app-body{display:block;}
 
@@ -322,18 +325,36 @@ body{
   margin-top:4px;
 }
 .change-flight-link{
-  background:none;
-  border:none;
+  display:inline-block;
   margin-left:10px;
-  padding:0;
+  padding:4px 10px;
   font-family:'IBM Plex Mono',monospace;
-  font-size:11px;
-  letter-spacing:.03em;
+  font-size:10px;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  background:#fff;
+  border:1px solid var(--line-strong);
+  border-radius:3px;
   color:var(--navy);
-  text-decoration:underline;
   cursor:pointer;
 }
-.change-flight-link:hover{color:var(--orange-dark);}
+.change-flight-link:hover{border-color:var(--orange);color:var(--orange-dark);background:var(--amber-bg);}
+.cadet-stat-badges{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+.cadet-stat-badge{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  letter-spacing:.04em;
+  padding:5px 10px;
+  border-radius:3px;
+  font-weight:600;
+}
+.cadet-stat-badge.disc{background:var(--red-bg);color:var(--red);}
+.cadet-stat-badge.idt{background:#E3E9F7;color:var(--navy-dark);}
 .edit-flight-cadet-name{
   font-family:'Oswald',sans-serif;
   font-size:18px;
@@ -366,11 +387,11 @@ body{
   margin:0 0 18px;
 }
 .btn-danger{
-  background:#fff;
-  border:1.5px solid var(--red);
-  color:var(--red);
+  background:#D32F2F;
+  border:1.5px solid #D32F2F;
+  color:#fff;
 }
-.btn-danger:hover{background:var(--red-bg);}
+.btn-danger:hover{background:#B71C1C;border-color:#B71C1C;}
 .cadet-danger-zone{
   margin-top:36px;
   padding-top:18px;
@@ -407,6 +428,8 @@ body{
 .entry.sev-minor{border-left-color:var(--amber);}
 .entry.sev-major{border-left-color:var(--red);}
 .entry.status-resolved{opacity:.6;}
+.entry.idt-entry{border-left-color:var(--navy);}
+.entry.idt-entry.status-complete{opacity:.6;}
 .entry-main{flex:1;min-width:0;}
 .entry-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
 .tag{
@@ -425,6 +448,32 @@ body{
 .tag.action-cam{background:var(--amber-bg);color:var(--amber);}
 .tag.action-loc{background:var(--red-bg);color:var(--red);}
 .tag.para{background:#E4E1D6;color:#544F42;}
+.tag.idt-cat-warriorknowledge{background:#E3E9F7;color:var(--navy-dark);}
+.tag.idt-cat-pt{background:var(--green-bg);color:var(--green);}
+.tag.idt-cat-marching{background:var(--amber-bg);color:var(--amber);}
+.tag.idt-cat-dressappearance{background:#F1E4F5;color:#7A3E8C;}
+.flight-open-ct.idt-ct, .cadet-row-open.idt-ct{background:var(--navy);}
+
+.all-entries-subtabs{
+  display:flex;
+  gap:10px;
+  margin-bottom:20px;
+}
+.subtab{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  padding:9px 16px;
+  border-radius:20px;
+  border:1.5px solid var(--line-strong);
+  background:#fff;
+  color:#6B6555;
+  cursor:pointer;
+}
+.subtab:hover{border-color:var(--ink);}
+.subtab.active{background:var(--red);border-color:var(--red);color:#fff;}
+.subtab.idt.active{background:var(--navy);border-color:var(--navy);color:#fff;}
 .entry-cadet-link{font-weight:600;font-size:13px;}
 .entry-desc{font-size:14px;line-height:1.5;margin:4px 0 8px;}
 .entry-foot{
@@ -675,6 +724,8 @@ const SEED_ROSTER = [
 
 const FLIGHT_ORDER = ["Alpha","Bravo","Charlie","Delta"];
 
+const IDT_CATEGORIES = ["Warrior Knowledge", "PT", "Marching", "Dress & Appearance"];
+
 function uid(prefix){
   return prefix + "_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,7);
 }
@@ -697,6 +748,16 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+// Sign in anonymously so writes (add/edit/delete cadet, log discrepancy) are
+// only allowed from a signed-in session, per the Database Rules. Reads stay
+// public so the page loads instantly without waiting on auth.
+const authReady = new Promise((resolve) => {
+  const unsub = firebase.auth().onAuthStateChanged((user) => {
+    if(user){ unsub(); resolve(user); }
+  });
+});
+firebase.auth().signInAnonymously().catch((e) => console.error("Anonymous sign-in failed:", e));
+
 async function loadShared(key, fallback){
   try{
     const snap = await db.ref(key).once('value');
@@ -708,6 +769,7 @@ async function loadShared(key, fallback){
 }
 async function saveShared(key, value){
   try{
+    await authReady;
     await db.ref(key).set(value);
     return true;
   }catch(e){
@@ -720,21 +782,27 @@ function App(){
   const [saveError, setSaveError] = useState("");
   const [roster, setRoster] = useState([]);
   const [discrepancies, setDiscrepancies] = useState([]);
+  const [idtEntries, setIdtEntries] = useState([]);
   const [selectedCadet, setSelectedCadet] = useState(null);
-  const [view, setView] = useState("home"); // 'home' | 'cadet' | 'all'
+  const [view, setView] = useState("home"); // 'home' | 'cadet' | 'idt' | 'all'
   const [showLogModal, setShowLogModal] = useState(false);
+  const [showLogIdtModal, setShowLogIdtModal] = useState(false);
   const [showAddCadet, setShowAddCadet] = useState(false);
   const [showEditFlight, setShowEditFlight] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [allEntriesTab, setAllEntriesTab] = useState("discrepancies"); // 'discrepancies' | 'idt'
+  const [idtStatusFilter, setIdtStatusFilter] = useState("all");
+  const [idtSearchTerm, setIdtSearchTerm] = useState("");
   const [rosterSearch, setRosterSearch] = useState("");
   const [expandedFlights, setExpandedFlights] = useState(() => new Set());
 
   useEffect(() => {
     (async () => {
-      const [r, d] = await Promise.all([
+      const [r, d, i] = await Promise.all([
         loadShared("roster", null),
-        loadShared("discrepancies", [])
+        loadShared("discrepancies", []),
+        loadShared("idt", [])
       ]);
       let finalRoster = r;
       if(!finalRoster){
@@ -743,6 +811,7 @@ function App(){
       }
       setRoster(finalRoster);
       setDiscrepancies(d || []);
+      setIdtEntries(i || []);
       if(finalRoster.length){
         let lastId = null;
         try{ lastId = localStorage.getItem("lastSelectedCadet"); }catch(e){}
@@ -756,6 +825,13 @@ function App(){
   const persistDiscrepancies = useCallback(async (next) => {
     setDiscrepancies(next);
     const ok = await saveShared("discrepancies", next);
+    if(!ok) setSaveError("Couldn't save — check your connection and try again.");
+    else setSaveError("");
+  }, []);
+
+  const persistIdt = useCallback(async (next) => {
+    setIdtEntries(next);
+    const ok = await saveShared("idt", next);
     if(!ok) setSaveError("Couldn't save — check your connection and try again.");
     else setSaveError("");
   }, []);
@@ -774,6 +850,14 @@ function App(){
     });
     return m;
   }, [discrepancies]);
+
+  const activeIdtCountByCadet = useMemo(() => {
+    const m = {};
+    idtEntries.forEach(d => {
+      if(d.status === "active") m[d.cadetId] = (m[d.cadetId]||0) + 1;
+    });
+    return m;
+  }, [idtEntries]);
 
   const flights = useMemo(() => {
     const g = {};
@@ -799,6 +883,8 @@ function App(){
 
   const totalOpen = discrepancies.filter(d => d.status === "open").length;
   const totalResolved = discrepancies.filter(d => d.status === "resolved").length;
+  const totalIdtActive = idtEntries.filter(d => d.status === "active").length;
+  const totalIdtComplete = idtEntries.filter(d => d.status === "complete").length;
 
   const cadetById = useCallback((id) => roster.find(c => c.id === id), [roster]);
 
@@ -855,6 +941,33 @@ function App(){
     persistDiscrepancies(discrepancies.filter(d => d.id !== id));
   }
 
+  function addIdtEntry(entry){
+    const next = [...idtEntries, {
+      id: uid("idt"),
+      cadetId: entry.cadetId,
+      category: entry.category,
+      note: entry.note,
+      dateNoted: entry.dateNoted,
+      notedBy: entry.notedBy,
+      status: "active",
+      dateCompleted: null
+    }];
+    persistIdt(next);
+  }
+
+  function toggleIdtStatus(id){
+    const next = idtEntries.map(d => {
+      if(d.id !== id) return d;
+      const nowActive = d.status === "complete";
+      return {...d, status: nowActive ? "active" : "complete", dateCompleted: nowActive ? null : new Date().toISOString().slice(0,10)};
+    });
+    persistIdt(next);
+  }
+
+  function deleteIdtEntry(id){
+    persistIdt(idtEntries.filter(d => d.id !== id));
+  }
+
   function addCadet(c){
     const next = [...roster, {id: uid("c"), last:c.last, first:c.first, flight:c.flight}];
     persistRoster(next);
@@ -863,6 +976,7 @@ function App(){
   function deleteCadet(id){
     persistRoster(roster.filter(c => c.id !== id));
     persistDiscrepancies(discrepancies.filter(d => d.cadetId !== id));
+    persistIdt(idtEntries.filter(d => d.cadetId !== id));
     if(selectedCadet === id) setSelectedCadet(null);
   }
 
@@ -877,6 +991,13 @@ function App(){
       .sort((a,b) => (b.dateNoted||"").localeCompare(a.dateNoted||""));
   }, [discrepancies, selectedCadet]);
 
+  const cadetIdtEntries = useMemo(() => {
+    if(!selectedCadet) return [];
+    return idtEntries
+      .filter(d => d.cadetId === selectedCadet)
+      .sort((a,b) => (b.dateNoted||"").localeCompare(a.dateNoted||""));
+  }, [idtEntries, selectedCadet]);
+
   const allEntries = useMemo(() => {
     let list = discrepancies.slice().sort((a,b) => (b.dateNoted||"").localeCompare(a.dateNoted||""));
     if(statusFilter !== "all") list = list.filter(d => d.status === statusFilter);
@@ -890,6 +1011,20 @@ function App(){
     }
     return list;
   }, [discrepancies, statusFilter, searchTerm, cadetById]);
+
+  const allIdtEntries = useMemo(() => {
+    let list = idtEntries.slice().sort((a,b) => (b.dateNoted||"").localeCompare(a.dateNoted||""));
+    if(idtStatusFilter !== "all") list = list.filter(d => d.status === idtStatusFilter);
+    if(idtSearchTerm.trim()){
+      const term = idtSearchTerm.trim().toLowerCase();
+      list = list.filter(d => {
+        const c = cadetById(d.cadetId);
+        const name = c ? (c.first + " " + c.last).toLowerCase() : "";
+        return name.includes(term) || (d.note||"").toLowerCase().includes(term) || d.category.toLowerCase().includes(term);
+      });
+    }
+    return list;
+  }, [idtEntries, idtStatusFilter, idtSearchTerm, cadetById]);
 
   if(loading){
     return <div className="loading">Loading roster and discrepancy log…</div>;
@@ -907,13 +1042,21 @@ function App(){
         <div className="det">AFI 36-2903 · Cadet Portal</div>
       </div>
       <div className="hero-stats">
+        <div className="hero-stat idt-stat open">
+          <div className="num">{totalIdtActive}</div>
+          <div className="lbl">Open IDT</div>
+        </div>
+        <div className="hero-stat idt-stat">
+          <div className="num">{totalIdtComplete}</div>
+          <div className="lbl">Resolved IDT</div>
+        </div>
         <div className="hero-stat open">
           <div className="num">{totalOpen}</div>
-          <div className="lbl">Open</div>
+          <div className="lbl">Open Discrep.</div>
         </div>
         <div className="hero-stat">
           <div className="num">{totalResolved}</div>
-          <div className="lbl">Resolved</div>
+          <div className="lbl">Resolved Discrep.</div>
         </div>
         <div className="hero-stat">
           <div className="num">{roster.length}</div>
@@ -925,10 +1068,11 @@ function App(){
       <div className="topbar">
         <div className="view-toggle">
           <button className={view==="home"?"active":""} onClick={()=>setView("home")}>Home</button>
-          <button className={view==="cadet"?"active":""} onClick={()=>setView("cadet")}>By Cadet</button>
+          <button className={view==="cadet"?"active":""} onClick={()=>setView("cadet")}>Discrepancy</button>
+          <button className={view==="idt"?"active":""} onClick={()=>setView("idt")}>Individual Cadet Training (IDT)</button>
           <button className={view==="all"?"active":""} onClick={()=>setView("all")}>All Entries</button>
         </div>
-        {view === "all" && (
+        {view === "all" && allEntriesTab === "discrepancies" && (
           <div className="search-box">
             <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}>
               <option value="all">All statuses</option>
@@ -940,6 +1084,21 @@ function App(){
               placeholder="Search name, category, notes…"
               value={searchTerm}
               onChange={e=>setSearchTerm(e.target.value)}
+            />
+          </div>
+        )}
+        {view === "all" && allEntriesTab === "idt" && (
+          <div className="search-box">
+            <select value={idtStatusFilter} onChange={e=>setIdtStatusFilter(e.target.value)}>
+              <option value="all">All statuses</option>
+              <option value="active">Active only</option>
+              <option value="complete">Complete only</option>
+            </select>
+            <input
+              type="text"
+              placeholder="Search name, focus area, notes…"
+              value={idtSearchTerm}
+              onChange={e=>setIdtSearchTerm(e.target.value)}
             />
           </div>
         )}
@@ -1044,8 +1203,12 @@ function App(){
                   <div>
                     <h2>{selected.last}, {selected.first}</h2>
                     <div className="meta">
-                      {selected.flight} Flight · {cadetEntries.filter(e=>e.status==="open").length} open discrepanc{cadetEntries.filter(e=>e.status==="open").length===1?"y":"ies"}
+                      {selected.flight} Flight
                       <button type="button" className="change-flight-link" onClick={()=>setShowEditFlight(true)}>Change flight</button>
+                    </div>
+                    <div className="cadet-stat-badges">
+                      <span className="cadet-stat-badge disc">{cadetEntries.filter(e=>e.status==="open").length} Open Discrepanc{cadetEntries.filter(e=>e.status==="open").length===1?"y":"ies"}</span>
+                      <span className="cadet-stat-badge idt">{cadetIdtEntries.filter(e=>e.status==="active").length} Active IDT Focus</span>
                     </div>
                   </div>
                   <button className="btn btn-primary" onClick={()=>setShowLogModal(true)}>+ Log Discrepancy</button>
@@ -1088,17 +1251,169 @@ function App(){
           </React.Fragment>
         )}
 
-        {view === "all" && (
-          <div className="all-list">
-            {allEntries.length === 0 && (
+        {view === "idt" && (
+          <React.Fragment>
+            <div className="roster-panel">
+              <div className="roster-panel-head">
+                <div className="roster-panel-title">Find a Cadet</div>
+                <div className="roster-search">
+                  <input
+                    type="text"
+                    className="roster-search-input"
+                    placeholder="Search cadet name…"
+                    value={rosterSearch}
+                    onChange={e=>setRosterSearch(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="roster-panel-flights">
+                {FLIGHT_ORDER.filter(f => filteredFlights[f] && filteredFlights[f].length).map(f => {
+                  const flightIdtCt = flights[f].reduce((sum,c) => sum + (activeIdtCountByCadet[c.id]||0), 0);
+                  const isExpanded = rosterSearchTerm ? true : expandedFlights.has(f);
+                  return (
+                    <div className="flight-group" key={f}>
+                      <button
+                        type="button"
+                        className={"flight-label" + (isExpanded ? " expanded" : "")}
+                        onClick={() => toggleFlight(f)}
+                      >
+                        <span className="flight-label-text">
+                          <span className="flight-chevron">▸</span>
+                          {f} Flight
+                        </span>
+                        {flightIdtCt > 0 && <span className="flight-open-ct idt-ct">{flightIdtCt} focus</span>}
+                      </button>
+                      {isExpanded && (
+                        <div className="cadet-list">
+                          {filteredFlights[f].map(c => {
+                            const idtCt = activeIdtCountByCadet[c.id] || 0;
+                            const isActive = selectedCadet === c.id;
+                            return (
+                              <button
+                                key={c.id}
+                                type="button"
+                                className={"cadet-row" + (isActive ? " active" : "")}
+                                onClick={() => { setSelectedCadet(c.id); setView("idt"); }}
+                              >
+                                <span className="cadet-row-name">{c.last}, {c.first}</span>
+                                {idtCt > 0 && <span className="cadet-row-open idt-ct">{idtCt}</span>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                {rosterSearchTerm && !rosterHasMatches && (
+                  <div className="roster-no-results">No cadets match "{rosterSearch.trim()}"</div>
+                )}
+              </div>
+              <div className="roster-panel-foot">
+                <button className="add-cadet-btn" onClick={()=>setShowAddCadet(true)}>+ Add Cadet</button>
+              </div>
+            </div>
+
+            {selected && (
+              <React.Fragment>
+                <div className="cadet-header">
+                  <div>
+                    <h2>{selected.last}, {selected.first}</h2>
+                    <div className="meta">
+                      {selected.flight} Flight
+                      <button type="button" className="change-flight-link" onClick={()=>setShowEditFlight(true)}>Change flight</button>
+                    </div>
+                    <div className="cadet-stat-badges">
+                      <span className="cadet-stat-badge disc">{cadetEntries.filter(e=>e.status==="open").length} Open Discrepanc{cadetEntries.filter(e=>e.status==="open").length===1?"y":"ies"}</span>
+                      <span className="cadet-stat-badge idt">{cadetIdtEntries.filter(e=>e.status==="active").length} Active IDT Focus</span>
+                    </div>
+                  </div>
+                  <button className="btn btn-primary" onClick={()=>setShowLogIdtModal(true)}>+ Log IDT Focus</button>
+                </div>
+
+                {cadetIdtEntries.length === 0 && (
+                  <div className="empty-state">
+                    <div className="big">No IDT focus areas on file</div>
+                    <div>This cadet has nothing flagged for warrior knowledge, PT, marching, or dress &amp; appearance.</div>
+                  </div>
+                )}
+
+                {cadetIdtEntries.map(e => (
+                  <IdtRow key={e.id} entry={e} onToggle={toggleIdtStatus} onDelete={deleteIdtEntry} />
+                ))}
+
+                <div className="cadet-danger-zone">
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    onClick={() => {
+                      const ok = window.confirm(
+                        "Delete " + selected.last + ", " + selected.first + " permanently?\n\nThis removes them from the roster and deletes all of their logged discrepancies and IDT focus entries. This cannot be undone."
+                      );
+                      if(ok) deleteCadet(selected.id);
+                    }}
+                  >
+                    Delete Cadet
+                  </button>
+                </div>
+              </React.Fragment>
+            )}
+
+            {!selected && (
               <div className="empty-state">
-                <div className="big">No matching entries</div>
-                <div>Try adjusting your filters.</div>
+                <div className="big">Select a cadet</div>
+                <div>Choose a name above to view their IDT focus record.</div>
               </div>
             )}
-            {allEntries.map(e => (
-              <EntryRow key={e.id} entry={e} onToggle={toggleStatus} onDelete={deleteEntry} cadet={cadetById(e.cadetId)} showCadet />
-            ))}
+          </React.Fragment>
+        )}
+
+        {view === "all" && (
+          <div className="all-list">
+            <div className="all-entries-subtabs">
+              <button
+                type="button"
+                className={"subtab" + (allEntriesTab==="discrepancies" ? " active" : "")}
+                onClick={()=>setAllEntriesTab("discrepancies")}
+              >
+                Discrepancies
+              </button>
+              <button
+                type="button"
+                className={"subtab idt" + (allEntriesTab==="idt" ? " active" : "")}
+                onClick={()=>setAllEntriesTab("idt")}
+              >
+                Individual Cadet Training (IDT)
+              </button>
+            </div>
+
+            {allEntriesTab === "discrepancies" && (
+              <React.Fragment>
+                {allEntries.length === 0 && (
+                  <div className="empty-state">
+                    <div className="big">No matching entries</div>
+                    <div>Try adjusting your filters.</div>
+                  </div>
+                )}
+                {allEntries.map(e => (
+                  <EntryRow key={e.id} entry={e} onToggle={toggleStatus} onDelete={deleteEntry} cadet={cadetById(e.cadetId)} showCadet />
+                ))}
+              </React.Fragment>
+            )}
+
+            {allEntriesTab === "idt" && (
+              <React.Fragment>
+                {allIdtEntries.length === 0 && (
+                  <div className="empty-state">
+                    <div className="big">No matching entries</div>
+                    <div>Try adjusting your filters.</div>
+                  </div>
+                )}
+                {allIdtEntries.map(e => (
+                  <IdtRow key={e.id} entry={e} onToggle={toggleIdtStatus} onDelete={deleteIdtEntry} cadet={cadetById(e.cadetId)} showCadet />
+                ))}
+              </React.Fragment>
+            )}
           </div>
         )}
       </div>
@@ -1109,6 +1424,14 @@ function App(){
           existingEntries={cadetEntries}
           onClose={()=>setShowLogModal(false)}
           onSubmit={(entry)=>{ addDiscrepancy({...entry, cadetId: selected.id}); setShowLogModal(false); }}
+        />
+      )}
+
+      {showLogIdtModal && selected && (
+        <IdtModal
+          cadet={selected}
+          onClose={()=>setShowLogIdtModal(false)}
+          onSubmit={(entry)=>{ addIdtEntry({...entry, cadetId: selected.id}); setShowLogIdtModal(false); }}
         />
       )}
 
@@ -1234,6 +1557,76 @@ function LogModal({cadet, existingEntries, onClose, onSubmit}){
   );
 }
 
+function IdtRow({entry, onToggle, onDelete, cadet, showCadet}){
+  return (
+    <div className={"entry idt-entry status-" + entry.status}>
+      <div className="entry-main">
+        <div className="entry-top">
+          {showCadet && cadet && <span className="entry-cadet-link">{cadet.last}, {cadet.first}</span>}
+          <span className={"tag idt-cat idt-cat-" + entry.category.replace(/[^a-zA-Z]/g,"").toLowerCase()}>{entry.category}</span>
+          <span className={"tag status-" + (entry.status === "active" ? "open" : "resolved")}>{entry.status === "active" ? "Active" : "Complete"}</span>
+        </div>
+        {entry.note && <div className="entry-desc">{entry.note}</div>}
+        <div className="entry-foot">
+          Noted {fmtDate(entry.dateNoted)}{entry.notedBy ? " by " + entry.notedBy : ""}
+          {entry.status === "complete" && entry.dateCompleted && " · Completed " + fmtDate(entry.dateCompleted)}
+        </div>
+      </div>
+      <div className="entry-actions">
+        <button className="icon-btn" onClick={()=>onToggle(entry.id)}>
+          {entry.status === "active" ? "Mark Complete" : "Reopen"}
+        </button>
+        <button className="icon-btn danger" onClick={()=>{ if(confirm("Delete this IDT entry?")) onDelete(entry.id); }}>Delete</button>
+      </div>
+    </div>
+
+  );
+}
+
+function IdtModal({cadet, onClose, onSubmit}){
+  const [category, setCategory] = useState(IDT_CATEGORIES[0]);
+  const [note, setNote] = useState("");
+  const [dateNoted, setDateNoted] = useState(new Date().toISOString().slice(0,10));
+  const [notedBy, setNotedBy] = useState("");
+
+  function submit(e){
+    e.preventDefault();
+    onSubmit({category, note: note.trim(), dateNoted, notedBy: notedBy.trim()});
+  }
+
+  return (
+    <div className="modal-backdrop" onClick={(e)=>{ if(e.target===e.currentTarget) onClose(); }}>
+      <div className="modal">
+        <h3>Log IDT Focus — {cadet.last}, {cadet.first}</h3>
+        <form onSubmit={submit}>
+          <div className="field">
+            <label>Focus Area</label>
+            <select value={category} onChange={e=>setCategory(e.target.value)}>
+              {IDT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div className="field">
+            <label>Why (optional)</label>
+            <textarea placeholder="e.g. Didn't know last week's warrior knowledge…" value={note} onChange={e=>setNote(e.target.value)} />
+          </div>
+          <div className="field">
+            <label>Date noted</label>
+            <input type="date" value={dateNoted} onChange={e=>setDateNoted(e.target.value)} />
+          </div>
+          <div className="field">
+            <label>Noted by</label>
+            <input type="text" placeholder="e.g. C/Lt Col Bobo" value={notedBy} onChange={e=>setNotedBy(e.target.value)} />
+          </div>
+          <div className="modal-actions">
+            <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
+            <button type="submit" className="btn btn-primary">Save Focus Area</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 function AddCadetModal({onClose, onSubmit}){
   const [last, setLast] = useState("");
   const [first, setFirst] = useState("");
@@ -1341,6 +1734,7 @@ root.render(<App />);
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 </body>
 </html>
