@@ -476,6 +476,17 @@ body{
 .subtab.idt.active{background:var(--navy);border-color:var(--navy);color:#fff;}
 .entry-cadet-link{font-weight:600;font-size:13px;}
 .entry-desc{font-size:14px;line-height:1.5;margin:4px 0 8px;}
+.idt-attend-date{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  font-weight:600;
+  color:var(--navy-dark);
+  background:#E3E9F7;
+  display:inline-block;
+  padding:4px 9px;
+  border-radius:3px;
+  margin:2px 0 8px;
+}
 .entry-foot{
   font-family:'IBM Plex Mono',monospace;
   font-size:11px;
@@ -956,6 +967,7 @@ function App(){
       category: entry.category,
       note: entry.note,
       dateNoted: entry.dateNoted,
+      attendDate: entry.attendDate || null,
       notedBy: entry.notedBy,
       status: "active",
       dateCompleted: null
@@ -1581,6 +1593,9 @@ function IdtRow({entry, onToggle, onDelete, cadet, showCadet}){
           <span className={"tag status-" + (entry.status === "active" ? "open" : "resolved")}>{entry.status === "active" ? "Active" : "Complete"}</span>
         </div>
         {entry.note && <div className="entry-desc">{entry.note}</div>}
+        {entry.attendDate && (
+          <div className="idt-attend-date">Attend IDT for this: {fmtDate(entry.attendDate)}</div>
+        )}
         <div className="entry-foot">
           Noted {fmtDate(entry.dateNoted)}{entry.notedBy ? " by " + entry.notedBy : ""}
           {entry.status === "complete" && entry.dateCompleted && " · Completed " + fmtDate(entry.dateCompleted)}
@@ -1601,11 +1616,12 @@ function IdtModal({cadet, onClose, onSubmit}){
   const [category, setCategory] = useState(IDT_CATEGORIES[0]);
   const [note, setNote] = useState("");
   const [dateNoted, setDateNoted] = useState(new Date().toISOString().slice(0,10));
+  const [attendDate, setAttendDate] = useState("");
   const [notedBy, setNotedBy] = useState("");
 
   function submit(e){
     e.preventDefault();
-    onSubmit({category, note: note.trim(), dateNoted, notedBy: notedBy.trim()});
+    onSubmit({category, note: note.trim(), dateNoted, attendDate, notedBy: notedBy.trim()});
   }
 
   return (
@@ -1626,6 +1642,10 @@ function IdtModal({cadet, onClose, onSubmit}){
           <div className="field">
             <label>Date noted</label>
             <input type="date" value={dateNoted} onChange={e=>setDateNoted(e.target.value)} />
+          </div>
+          <div className="field">
+            <label>Date cadet should attend IDT for this</label>
+            <input type="date" value={attendDate} onChange={e=>setAttendDate(e.target.value)} />
           </div>
           <div className="field">
             <label>Noted by</label>
