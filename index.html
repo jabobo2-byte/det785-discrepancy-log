@@ -559,6 +559,7 @@ body{
   color:#847C68;
   margin-bottom:10px;
 }
+.home-flight-stats{display:flex;flex-direction:column;gap:4px;}
 .home-flight-open{
   font-family:'IBM Plex Mono',monospace;
   font-size:12px;
@@ -566,6 +567,13 @@ body{
   color:var(--green);
 }
 .home-flight-open.has-open{color:var(--red);}
+.home-flight-idt{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  font-weight:600;
+  color:var(--green);
+}
+.home-flight-idt.has-open{color:var(--navy);}
 
 /* All-discrepancies table view */
 .all-list .entry{flex-direction:column;}
@@ -1110,8 +1118,8 @@ function App(){
           <div className="home-view">
             <div className="home-hero">
               <div className="home-hero-eyebrow">University of Memphis · AFROTC Det 785</div>
-              <h2>Discrepancy Log</h2>
-              <p>Track AFI 36-2903 discrepancies, warnings, CAMs, and LOCs across all four flights.</p>
+              <h2>Official Cadet Tracker</h2>
+              <p>Track discrepancies, warnings, CAMs, LOCs, and IDT focus areas across all four flights.</p>
               <div className="home-actions">
                 <button className="btn btn-primary" onClick={()=>setView("cadet")}>Browse by Cadet</button>
                 <button className="btn btn-ghost" onClick={()=>setView("all")}>View All Entries</button>
@@ -1120,12 +1128,18 @@ function App(){
             <div className="home-summary-grid">
               {FLIGHT_ORDER.filter(f => flights[f] && flights[f].length).map(f => {
                 const flightOpenCt = flights[f].reduce((sum,c) => sum + (openCountByCadet[c.id]||0), 0);
+                const flightIdtCt = flights[f].reduce((sum,c) => sum + (activeIdtCountByCadet[c.id]||0), 0);
                 return (
                   <div className="home-flight-card" key={f}>
                     <div className="home-flight-name">{f} Flight</div>
                     <div className="home-flight-count">{flights[f].length} cadets</div>
-                    <div className={"home-flight-open" + (flightOpenCt>0 ? " has-open":"")}>
-                      {flightOpenCt} open discrepanc{flightOpenCt===1?"y":"ies"}
+                    <div className="home-flight-stats">
+                      <div className={"home-flight-open" + (flightOpenCt>0 ? " has-open":"")}>
+                        {flightOpenCt} open discrepanc{flightOpenCt===1?"y":"ies"}
+                      </div>
+                      <div className={"home-flight-idt" + (flightIdtCt>0 ? " has-open":"")}>
+                        {flightIdtCt} open IDT{flightIdtCt===1?"":"s"}
+                      </div>
                     </div>
                   </div>
                 );
