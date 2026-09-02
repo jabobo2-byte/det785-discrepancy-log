@@ -809,7 +809,7 @@ body{
 <div id="root"></div>
 
 <script type="text/babel">
-const {useState, useEffect, useMemo, useCallback} = React;
+const {useState, useEffect, useMemo, useCallback, useRef} = React;
 
 const AFI_CATEGORIES = [
   "Hair & Grooming",
@@ -1192,6 +1192,19 @@ function App({currentUser, isAdmin, onSignOut}){
     persistRoster(roster.map(c => c.id === id ? {...c, flight: newFlight} : c));
   }
 
+  const cadetHeaderRef = useRef(null);
+  function selectCadetAndScroll(id, targetView){
+    setSelectedCadet(id);
+    setView(targetView);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if(cadetHeaderRef.current){
+          cadetHeaderRef.current.scrollIntoView({behavior:"smooth", block:"start"});
+        }
+      });
+    });
+  }
+
   function applyRosterImport(nextRoster, removedIds){
     persistRoster(nextRoster);
     if(removedIds.length){
@@ -1405,7 +1418,7 @@ function App({currentUser, isAdmin, onSignOut}){
                                 key={c.id}
                                 type="button"
                                 className={"cadet-row" + (isActive ? " active" : "")}
-                                onClick={() => { setSelectedCadet(c.id); setView("cadet"); setShowLogModal(true); }}
+                                onClick={() => selectCadetAndScroll(c.id, "cadet")}
                               >
                                 <span className="cadet-row-name">{c.last}, {c.first}</span>
                                 {openCt > 0 && <span className="cadet-row-open">{openCt}</span>}
@@ -1428,7 +1441,7 @@ function App({currentUser, isAdmin, onSignOut}){
 
             {selected && (
               <React.Fragment>
-                <div className="cadet-header">
+                <div className="cadet-header" ref={cadetHeaderRef}>
                   <div>
                     <h2>{selected.last}, {selected.first}</h2>
                     <div className="meta">
@@ -1522,7 +1535,7 @@ function App({currentUser, isAdmin, onSignOut}){
                                 key={c.id}
                                 type="button"
                                 className={"cadet-row" + (isActive ? " active" : "")}
-                                onClick={() => { setSelectedCadet(c.id); setView("idt"); }}
+                                onClick={() => selectCadetAndScroll(c.id, "idt")}
                               >
                                 <span className="cadet-row-name">{c.last}, {c.first}</span>
                                 {idtCt > 0 && <span className="cadet-row-open idt-ct">{idtCt}</span>}
@@ -1545,7 +1558,7 @@ function App({currentUser, isAdmin, onSignOut}){
 
             {selected && (
               <React.Fragment>
-                <div className="cadet-header">
+                <div className="cadet-header" ref={cadetHeaderRef}>
                   <div>
                     <h2>{selected.last}, {selected.first}</h2>
                     <div className="meta">
