@@ -777,6 +777,23 @@ body{
 .admin-add-form .btn{padding:9px 16px;font-size:11px;}
 .admin-note{font-size:12px;color:#8A8471;margin-top:6px;}
 .admin-err{color:var(--red);font-size:13px;margin-bottom:10px;}
+.import-modal{max-width:640px;max-height:82vh;overflow-y:auto;}
+.import-textarea{
+  width:100%;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  padding:10px;
+  border-radius:3px;
+  border:1px solid var(--line-strong);
+  resize:vertical;
+}
+.import-modal .admin-row select{
+  font-family:'IBM Plex Sans',sans-serif;
+  font-size:12px;
+  padding:5px 8px;
+  border:1px solid var(--line-strong);
+  border-radius:3px;
+}
 
 @media (max-width: 760px){
   .content{padding:20px 16px 60px;}
@@ -869,6 +886,67 @@ function fmtDate(iso){
   return d.toLocaleDateString('en-US',{month:'short',day:'2-digit',year:'numeric'});
 }
 
+// Parses spreadsheet rows pasted by an admin into {last, first, flight} rows.
+// Accepts either the full multi-column export (classCode, last, first, phone,
+// schoolEmail, personalEmail, classLabel, flight) or a minimal (last, first, flight) paste.
+function parseRosterPaste(text){
+  const lines = (text || "").split(/\r?\n/).map(l => l.replace(/\s+$/,"")).filter(l => l.trim().length);
+  const rows = [];
+  const warnings = [];
+  lines.forEach((line, idx) => {
+    const fields = line.split("\t").map(f => f.trim());
+    let last = "", first = "", flightRaw = "";
+    if(fields.length >= 8){
+      last = fields[1]; first = fields[2]; flightRaw = fields[7];
+    } else if(fields.length === 3){
+      [last, first, flightRaw] = fields;
+    } else if(fields.length >= 2){
+      const flightIdx = fields.findIndex(f => FLIGHT_ORDER.some(fl => fl.toLowerCase() === f.toLowerCase()));
+      if(flightIdx >= 0){
+        flightRaw = fields[flightIdx];
+        last = fields[0]; first = fields[1];
+      } else {
+        last = fields[0]; first = fields[1];
+      }
+    }
+    if(!last || !first){
+      warnings.push(`Line ${idx+1}: couldn't find a name — skipped ("${line.slice(0,60)}")`);
+      return;
+    }
+    const flight = FLIGHT_ORDER.find(fl => fl.toLowerCase() === flightRaw.trim().toLowerCase()) || "";
+    rows.push({last, first, flight, hasFlight: !!flight});
+  });
+  return {rows, warnings};
+}
+
+// Diffs parsed rows against the current roster: new cadets to add, flight
+// changes to apply to existing cadets, cadets missing a flight in the paste,
+// and current cadets that weren't present anywhere in the pasted data.
+function computeRosterDiff(roster, rows){
+  const norm = s => (s || "").trim().toLowerCase();
+  const existingMap = new Map(roster.map(c => [norm(c.last) + "|" + norm(c.first), c]));
+  const importedKeys = new Set();
+  const toAdd = [];
+  const toUpdateFlight = [];
+  const noFlight = [];
+  rows.forEach(r => {
+    const key = norm(r.last) + "|" + norm(r.first);
+    importedKeys.add(key);
+    const existing = existingMap.get(key);
+    if(existing){
+      if(r.hasFlight && existing.flight !== r.flight){
+        toUpdateFlight.push({id: existing.id, last: r.last, first: r.first, from: existing.flight, to: r.flight});
+      }
+    } else if(r.hasFlight){
+      toAdd.push({last: r.last, first: r.first, flight: r.flight});
+    } else {
+      noFlight.push({last: r.last, first: r.first});
+    }
+  });
+  const notInImport = roster.filter(c => !importedKeys.has(norm(c.last) + "|" + norm(c.first)));
+  return {toAdd, toUpdateFlight, noFlight, notInImport};
+}
+
 const firebaseConfig = {
   apiKey: "AIzaSyAKEzzM-WFCOSkvikRRSpXMss-j8WAZ3_c",
   authDomain: "det-785-discrepancy-tracker.firebaseapp.com",
@@ -917,6 +995,7 @@ function App({currentUser, isAdmin, onSignOut}){
   const [showLogIdtModal, setShowLogIdtModal] = useState(false);
   const [showAddCadet, setShowAddCadet] = useState(false);
   const [showEditFlight, setShowEditFlight] = useState(false);
+  const [showImportRoster, setShowImportRoster] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [allEntriesTab, setAllEntriesTab] = useState("discrepancies"); // 'discrepancies' | 'idt'
@@ -1113,6 +1192,15 @@ function App({currentUser, isAdmin, onSignOut}){
     persistRoster(roster.map(c => c.id === id ? {...c, flight: newFlight} : c));
   }
 
+  function applyRosterImport(nextRoster, removedIds){
+    persistRoster(nextRoster);
+    if(removedIds.length){
+      persistDiscrepancies(discrepancies.filter(d => !removedIds.includes(d.cadetId)));
+      persistIdt(idtEntries.filter(d => !removedIds.includes(d.cadetId)));
+      if(selectedCadet && removedIds.includes(selectedCadet)) setSelectedCadet(null);
+    }
+  }
+
   const cadetEntries = useMemo(() => {
     if(!selectedCadet) return [];
     return discrepancies
@@ -1234,6 +1322,7 @@ function App({currentUser, isAdmin, onSignOut}){
         {saveError && <div className="save-error" style={{color:"var(--red)", fontFamily:"'IBM Plex Mono',monospace", fontSize:12}}>{saveError}</div>}
         <div className="account-box">
           <span className="account-email">{currentUser && currentUser.email}</span>
+          {isAdmin && <button type="button" className="account-admin-btn" onClick={()=>setShowImportRoster(true)}>Import Roster</button>}
           {isAdmin && <button type="button" className="account-admin-btn" onClick={()=>setShowAdminPanel(true)}>Admin</button>}
           <button type="button" className="account-signout-btn" onClick={onSignOut}>Sign Out</button>
         </div>
@@ -1590,6 +1679,14 @@ function App({currentUser, isAdmin, onSignOut}){
       {showAdminPanel && (
         <AdminPanel currentUser={currentUser} onClose={()=>setShowAdminPanel(false)} />
       )}
+
+      {showImportRoster && (
+        <ImportRosterModal
+          roster={roster}
+          onApply={applyRosterImport}
+          onClose={()=>setShowImportRoster(false)}
+        />
+      )}
     </div>
     </React.Fragment>
   );
@@ -1874,6 +1971,169 @@ function EditFlightModal({cadet, onClose, onSubmit}){
             <button type="submit" className="btn btn-primary">Save</button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+function ImportRosterModal({roster, onApply, onClose}){
+  const [pasteText, setPasteText] = useState("");
+  const [diff, setDiff] = useState(null);
+  const [warnings, setWarnings] = useState([]);
+  const [addChecked, setAddChecked] = useState({});
+  const [updateChecked, setUpdateChecked] = useState({});
+  const [removeChecked, setRemoveChecked] = useState({});
+  const [noFlightChecked, setNoFlightChecked] = useState({});
+  const [noFlightPicks, setNoFlightPicks] = useState({});
+  const [busy, setBusy] = useState(false);
+
+  function handlePreview(){
+    const {rows, warnings: w} = parseRosterPaste(pasteText);
+    const d = computeRosterDiff(roster, rows);
+    setDiff(d);
+    setWarnings(w);
+    const ac = {}; d.toAdd.forEach((r,i)=>{ ac[i]=true; }); setAddChecked(ac);
+    const uc = {}; d.toUpdateFlight.forEach((r,i)=>{ uc[i]=true; }); setUpdateChecked(uc);
+    const rc = {}; d.notInImport.forEach((r,i)=>{ rc[i]=false; }); setRemoveChecked(rc);
+    const nfc = {}; const nfp = {};
+    d.noFlight.forEach((r,i)=>{ nfc[i]=false; nfp[i]=""; });
+    setNoFlightChecked(nfc); setNoFlightPicks(nfp);
+  }
+
+  function startOver(){
+    setDiff(null); setPasteText(""); setWarnings([]);
+  }
+
+  function handleApply(){
+    if(!diff) return;
+    setBusy(true);
+    const additions = diff.toAdd
+      .filter((r,i)=>addChecked[i])
+      .map(r => ({id: uid("c"), last: r.last, first: r.first, flight: r.flight}));
+    const noFlightAdditions = diff.noFlight
+      .map((r,i) => ({r, i}))
+      .filter(({i}) => noFlightChecked[i] && noFlightPicks[i])
+      .map(({r,i}) => ({id: uid("c"), last: r.last, first: r.first, flight: noFlightPicks[i]}));
+    const flightUpdateMap = {};
+    diff.toUpdateFlight.forEach((r,i) => { if(updateChecked[i]) flightUpdateMap[r.id] = r.to; });
+    const removeIds = diff.notInImport
+      .filter((c,i)=>removeChecked[i])
+      .map(c => c.id);
+    const removeSet = new Set(removeIds);
+
+    const nextRoster = roster
+      .filter(c => !removeSet.has(c.id))
+      .map(c => flightUpdateMap[c.id] ? {...c, flight: flightUpdateMap[c.id]} : c)
+      .concat(additions, noFlightAdditions);
+
+    onApply(nextRoster, removeIds);
+    setBusy(false);
+    onClose();
+  }
+
+  const hasAnyChanges = diff && (diff.toAdd.length || diff.toUpdateFlight.length || diff.notInImport.length || diff.noFlight.length);
+
+  return (
+    <div className="modal-backdrop" onClick={(e)=>{ if(e.target===e.currentTarget) onClose(); }}>
+      <div className="modal admin-modal import-modal">
+        <h3>Import Roster</h3>
+        {!diff ? (
+          <React.Fragment>
+            <div className="admin-note" style={{marginBottom:10}}>
+              Paste rows straight from your roster spreadsheet (tab-separated works best). Either the full export columns or just Last / First / Flight is fine — cadets are matched by name, so existing discrepancy and IDT history is never affected by a flight change.
+            </div>
+            <textarea
+              className="import-textarea"
+              value={pasteText}
+              onChange={e=>setPasteText(e.target.value)}
+              rows={10}
+              placeholder="Paste spreadsheet rows here…"
+            />
+            <div className="modal-actions">
+              <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
+              <button type="button" className="btn btn-primary" disabled={!pasteText.trim()} onClick={handlePreview}>Preview Changes</button>
+            </div>
+          </React.Fragment>
+        ) : (
+          <React.Fragment>
+            {warnings.length > 0 && (
+              <div className="admin-section">
+                <div className="admin-section-title">Skipped Lines</div>
+                {warnings.map((w,i) => <div key={i} className="admin-note">{w}</div>)}
+              </div>
+            )}
+
+            <div className="admin-section">
+              <div className="admin-section-title">New Cadets to Add {diff.toAdd.length > 0 && <span className="admin-count">{diff.toAdd.length}</span>}</div>
+              {diff.toAdd.length === 0 && <div className="admin-empty">None.</div>}
+              {diff.toAdd.map((r,i) => (
+                <label className="admin-row" key={"add"+i}>
+                  <span className="admin-row-email">
+                    <input type="checkbox" checked={!!addChecked[i]} onChange={e=>setAddChecked({...addChecked,[i]:e.target.checked})} />
+                    {r.last}, {r.first} — {r.flight}
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            <div className="admin-section">
+              <div className="admin-section-title">Flight Changes {diff.toUpdateFlight.length > 0 && <span className="admin-count">{diff.toUpdateFlight.length}</span>}</div>
+              {diff.toUpdateFlight.length === 0 && <div className="admin-empty">None — no existing cadet's flight changed.</div>}
+              {diff.toUpdateFlight.map((r,i) => (
+                <label className="admin-row" key={"upd"+i}>
+                  <span className="admin-row-email">
+                    <input type="checkbox" checked={!!updateChecked[i]} onChange={e=>setUpdateChecked({...updateChecked,[i]:e.target.checked})} />
+                    {r.last}, {r.first} — {r.from} → {r.to}
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            {diff.noFlight.length > 0 && (
+              <div className="admin-section">
+                <div className="admin-section-title">New Cadets Missing a Flight <span className="admin-count">{diff.noFlight.length}</span></div>
+                <div className="admin-note" style={{marginBottom:8}}>These names weren't found in the current roster and the import didn't list a flight for them. Pick one to add them, or leave blank to skip.</div>
+                {diff.noFlight.map((r,i) => (
+                  <div className="admin-row" key={"nf"+i}>
+                    <span className="admin-row-email">
+                      <input type="checkbox" checked={!!noFlightChecked[i]} onChange={e=>setNoFlightChecked({...noFlightChecked,[i]:e.target.checked})} />
+                      {r.last}, {r.first}
+                    </span>
+                    <select value={noFlightPicks[i]||""} onChange={e=>setNoFlightPicks({...noFlightPicks,[i]:e.target.value})}>
+                      <option value="">Pick flight…</option>
+                      {FLIGHT_ORDER.map(f => <option key={f} value={f}>{f}</option>)}
+                    </select>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="admin-section">
+              <div className="admin-section-title">Not In This Import {diff.notInImport.length > 0 && <span className="admin-count">{diff.notInImport.length}</span>}</div>
+              {diff.notInImport.length === 0 && <div className="admin-empty">Every current cadet was found in the import.</div>}
+              {diff.notInImport.length > 0 && (
+                <div className="admin-note" style={{marginBottom:8}}>
+                  Checking one of these permanently deletes that cadet along with all of their logged discrepancies and IDT entries. Leave unchecked to keep them exactly as they are.
+                </div>
+              )}
+              {diff.notInImport.map((c,i) => (
+                <label className="admin-row" key={"rm"+i}>
+                  <span className="admin-row-email">
+                    <input type="checkbox" checked={!!removeChecked[i]} onChange={e=>setRemoveChecked({...removeChecked,[i]:e.target.checked})} />
+                    {c.last}, {c.first} — {c.flight}
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            {!hasAnyChanges && <div className="admin-empty">No differences found between the import and the current roster.</div>}
+
+            <div className="modal-actions">
+              <button type="button" className="btn btn-ghost" onClick={startOver}>Start Over</button>
+              <button type="button" className="btn btn-primary" disabled={busy || !hasAnyChanges} onClick={handleApply}>Apply Changes</button>
+            </div>
+          </React.Fragment>
+        )}
       </div>
     </div>
   );
